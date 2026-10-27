@@ -14,3 +14,11 @@ CẬP NHẬT
 - Hết mỗi lượt chơi hiện màn tuyên dương top 3. Đã bỏ trò Vẽ & đoán.
 - Thùng góp ý: mọi học sinh gửi được (có thể ẩn danh), chỉ giáo viên đọc được.
 - Lưu ý: để câu đã hỏi và góp ý không bị mất khi server khởi động lại, cần ổ đĩa lưu trữ (biến môi trường DATA_DIR).
+
+GOOGLE SHEET (TỰ ĐỘNG GỬI BÁO CÁO VÀ GÓP Ý)
+1. Tạo một Google Sheet mới (chỉ mình bạn xem, đừng chia sẻ công khai vì có góp ý của học sinh).
+2. Tiện ích mở rộng > Apps Script, dán nội dung file google-sheet-script.gs, tự đặt mã ở dòng KEY.
+3. Triển khai > Ứng dụng web (Thực thi: Tôi, Quyền truy cập: Bất kỳ ai), cấp quyền, copy URL.
+4. Trên Render > Environment thêm: SHEETS_URL = URL vừa copy; SHEETS_KEY = mã ở dòng KEY.
+5. Lưu, Render deploy lại. Đăng nhập giáo viên > Xuất báo cáo > bấm 'Gửi tất cả lên Google Sheet' một lần để đẩy dữ liệu cũ.
+Từ đó mỗi báo cáo, nhận xét, góp ý mới đều tự lên Sheet (2 trang tính: Báo cáo, Góp ý).

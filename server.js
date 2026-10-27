@@ -25,13 +25,13 @@ const bc=m=>wss.clients.forEach(w=>w.u!==undefined&&to(w,m));
 const topOf=sc=>Object.entries(sc).map(([i,s])=>({n:NAMES[i],s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,10);
 const board=()=>Object.entries(D.total).map(([i,s])=>({n:NAMES[i],to:D.tos[i]||0,s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,15);
 let G=null;
-function endGame(x){if(!G)return;clearTimeout(G.tm);clearInterval(G.iv);for(const i in G.sc)D.total[i]=(D.total[i]||0)+G.sc[i];save();bc(Object.assign({t:'end',g:G.type,win3:topOf(G.sc).filter(r=>r.s>0).slice(0,3)},x));G=null;bc({t:'board',b:board()})}
+function endGame(x){if(!G)return;clearTimeout(G.tm);clearInterval(G.iv);for(const i in G.sc)D.total[i]=(D.total[i]||0)+G.sc[i];save();bc(Object.assign({t:'end',g:G.type,win3:topOf(G.sc).filter(r=>r.s>0).slice(0,3)},x));wss.clients.forEach(c=>{c.rd=false});online();G=null;bc({t:'board',b:board()})}
 function parseQ(t){const a=String(t||'').split('\n').map(l=>l.split('|').map(s=>s.trim())).filter(p=>p.length>=6&&[1,2,3,4].includes(+p[5])).map(p=>[p[0],p[1],p[2],p[3],p[4],+p[5]]);return a}
 const allBank=()=>bank.concat(D.extra);
 // Câu đã hỏi (D.used) bị loại khỏi kho, không bao giờ hỏi lại trừ khi giáo viên bấm 'Làm mới kho'
 function pick(n){return allBank().filter(q=>!D.used.includes(q[0])).sort(()=>Math.random()-.5).slice(0,n)}
 const sendBank=()=>{const a=allBank(),left=a.filter(q=>!D.used.includes(q[0])).length;wss.clients.forEach(w=>w.u==='admin'&&to(w,{t:'bank',left:left,total:a.length}))};
-const online=()=>bc({t:'on',l:stu().map(w=>({n:NAMES[w.u],av:D.av[w.u]}))});
+const online=()=>bc({t:'on',l:stu().map(w=>({i:w.u,n:NAMES[w.u],av:D.av[w.u],r:!!w.rd}))});
 function quiz(qs,sec,fb){G={type:'quiz',qs,sec,fb,k:-1,sc:{}};nextQ()}
 function nextQ(){G.k++;if(G.k>=G.qs.length)return endGame();const q=G.qs[G.k];if(G.fb&&!D.used.includes(q[0])){D.used.push(q[0]);save();sendBank()}const ix=[1,2,3,4].sort(()=>Math.random()-.5);G.cc=ix.indexOf(q[5])+1;G.ans={};G.rv=false;G.t0=Date.now();bc({t:'q',k:G.k,n:G.qs.length,q:q[0],o:ix.map(k=>q[k]),sec:G.sec});G.tm=setTimeout(revealQ,G.sec*1000+300)}
 function revealQ(){if(G.rv)return;G.rv=true;clearTimeout(G.tm);const gain={};for(const i in G.ans){const a=G.ans[i];if(a.c===G.cc){const p=Math.round(500+500*(1-a.ms/(G.sec*1000)));gain[i]=p;G.sc[i]=(G.sc[i]||0)+p}}bc({t:'qr',ans:G.cc,gain,top:topOf(G.sc)});G.tm=setTimeout(nextQ,4500)}
@@ -46,10 +46,20 @@ const pushRoster=()=>bc({t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});
 const pushReports=()=>bc({t:'reports',list:D.reports,rem:D.rem});
 const boxView=x=>({id:x.id,ts:x.ts,anon:x.from===null,name:x.from===null?null:NAMES[x.from],text:x.text,rd:!!x.rd});
 const sgl={};
+// ---- Đồng bộ Google Sheet (tùy chọn): đặt SHEETS_URL và SHEETS_KEY trên Render ----
+const SHEETS_URL=process.env.SHEETS_URL||'',SHEETS_KEY=process.env.SHEETS_KEY||'';
+const vnTime=t=>new Date(t).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});
+const LEG=['Nề nếp, chuyên cần','Học tập','Phong trào','Ý kiến, đề xuất, ghi chú'];
+const FORMS={tq:['Các khoản thu','Các khoản chi','Số dư quỹ hiện tại','Ghi chú'],lphp:['Tình hình học tập'],lppt:['Tình hình trực nhật'],pvn:['Tình hình tham gia phong trào','Các hoạt động sắp tới']};
+const repRow=r=>{const L=(r.v===2&&FORMS[r.mk])||LEG;return{id:r.id,tuan:r.tuan,ngay:r.ngay||'',muc:r.dv,ten:r.ten,nd:[r.f1,r.f2,r.f3,r.f4].map((v,i)=>L[i]&&v?L[i]+': '+v:'').filter(Boolean).join('\n'),nx:D.rem[r.id]||'',ts:vnTime(r.ts)}};
+const boxRow=x=>({id:x.id,ts:vnTime(x.ts),ten:x.from===null?'Ẩn danh':NAMES[x.from],nd:x.text});
+async function pushSheet(o){if(!SHEETS_URL||typeof fetch!=='function')return false;
+ try{const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:SHEETS_KEY},o)),redirect:'follow',signal:AbortSignal.timeout(30000)});
+  return /"ok"\s*:\s*true/.test(await r.text())}catch(e){return false}}
 const wishesFor=u=>{const k=vn();return D.wishes.filter(x=>(x.y===k.y&&BDAY[x.to]===k.key)||x.to===u)};
 function auth(w,i,k){w.u=i;w.tk=k;to(w,{t:'auth',i:i,n:i==='admin'?'':NAMES[i],adm:i==='admin',token:k});
  to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
- if(i==='admin'){to(w,{t:'hist',l:D.his});to(w,{t:'box',l:D.box.map(boxView)});sendBank()}
+ if(i==='admin'){to(w,{t:'cfg',sheets:!!SHEETS_URL});to(w,{t:'hist',l:D.his});to(w,{t:'box',l:D.box.map(boxView)});sendBank()}
  if(G)to(w,{t:'busy',g:G.type});online()}
 wss.on('connection',w=>{
  w.on('message',raw=>{let m;try{m=JSON.parse(raw)}catch(e){return}
@@ -79,24 +89,29 @@ wss.on('connection',w=>{
   const id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   D.reports.push({id:id,tuan:tuan,ngay:String(m.ngay||'').slice(0,10),mk:k,dv:label(h),ten:NAMES[h],ai:h,v:2,f1:f[0],f2:f[1],f3:f[2],f4:f[3],ts:Date.now()});
   if(adm&&m.nx)D.rem[id]=String(m.nx).slice(0,1000);
+  pushSheet({kind:'report',row:repRow(D.reports[D.reports.length-1])});
   logH(u,'Thêm báo cáo','Tuần '+tuan+' — '+NAMES[h]+' ('+label(h)+')');save();to(w,{t:'note',m:'Đã lưu báo cáo ✅'});return pushReports()}
- if(m.t==='delrep'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;D.reports=D.reports.filter(x=>x.id!==m.id);delete D.rem[m.id];logH(u,'Xóa báo cáo','Tuần '+r.tuan+' — '+r.ten);save();return pushReports()}
- if(m.t==='remark'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;const t=String(m.text||'').trim().slice(0,1000);if(t)D.rem[m.id]=t;else delete D.rem[m.id];logH(u,'Nhận xét GVCN','Tuần '+r.tuan+' — '+r.ten);save();return pushReports()}
+ if(m.t==='delrep'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;D.reports=D.reports.filter(x=>x.id!==m.id);delete D.rem[m.id];logH(u,'Xóa báo cáo','Tuần '+r.tuan+' — '+r.ten);save();pushSheet({kind:'delreport',id:r.id});return pushReports()}
+ if(m.t==='remark'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;const t=String(m.text||'').trim().slice(0,1000);if(t)D.rem[m.id]=t;else delete D.rem[m.id];logH(u,'Nhận xét GVCN','Tuần '+r.tuan+' — '+r.ten);save();pushSheet({kind:'report',row:repRow(r)});return pushReports()}
  if(m.t==='flower'&&!adm){const k=vn(),t=+m.to;
   if(!(t>=0&&t<NAMES.length)||BDAY[t]!==k.key)return to(w,{t:'note',m:'Chỉ gửi hoa đúng ngày sinh nhật của bạn ấy nhé 🌸'});
   if(D.wishes.filter(x=>x.to===t&&x.from===u&&x.y===k.y).length>=30)return to(w,{t:'note',m:'Bạn gửi nhiều rồi, để dành cho bạn khác nhé 💐'});
   const x={id:'w'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),to:t,from:u,e:String(m.e||'🌸').slice(0,8),text:String(m.text||'').slice(0,120),ts:Date.now(),y:k.y};
   D.wishes.push(x);save();return bc({t:'wish',w:x})}
+ if(m.t==='ready'&&!adm){w.rd=!!m.v;return online()}
  if(m.t==='suggest'&&!adm){const t=String(m.text||'').trim().slice(0,1000);
   if(t.length<3)return to(w,{t:'note',m:'Hãy viết nội dung góp ý nhé'});
   const now=Date.now(),a=(sgl[u]=(sgl[u]||[]).filter(x=>now-x<3600e3));
   if(a.length>=5)return to(w,{t:'note',m:'Bạn đã gửi nhiều góp ý trong 1 giờ qua, hãy thử lại sau nhé'});
   a.push(now);
   const x={id:'b'+now.toString(36)+Math.random().toString(36).slice(2,5),ts:now,from:m.anon?null:u,text:t,rd:false};
-  D.box.push(x);if(D.box.length>1000)D.box.splice(0,D.box.length-1000);save();
+  D.box.push(x);if(D.box.length>1000)D.box.splice(0,D.box.length-1000);save();pushSheet({kind:'box',row:boxRow(x)});
   wss.clients.forEach(a2=>a2.u==='admin'&&to(a2,{t:'box1',x:boxView(x)}));
   return to(w,{t:'boxok'})}
  if(u==='admin'){
+  if(m.t==='sheetsync'){if(!SHEETS_URL)return to(w,{t:'note',m:'Chưa cài SHEETS_URL trên server (xem README)'});
+   to(w,{t:'note',m:'Đang gửi lên Google Sheet…'});
+   pushSheet({kind:'bulk',reports:D.reports.map(repRow),box:D.box.map(boxRow)}).then(ok=>to(w,{t:'note',m:ok?'Đã đồng bộ '+D.reports.length+' báo cáo và '+D.box.length+' góp ý lên Google Sheet ✅':'Gửi lên Google Sheet chưa được, hãy kiểm tra lại link và mã'}));return}
   if(m.t==='backup'){const c=Object.assign({},D);delete c.tok;return to(w,{t:'backup',d:JSON.stringify(c)})}
   if(m.t==='restore'){let x;try{x=JSON.parse(m.data)}catch(e){return to(w,{t:'note',m:'File không hợp lệ'})}
    if(!x||typeof x!=='object'||!Array.isArray(x.reports)||!x.roles||typeof x.roles!=='object')return to(w,{t:'note',m:'File này không phải bản sao lưu của web lớp'});
