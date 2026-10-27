@@ -41,7 +41,7 @@ function tapEnd(){G.run=false;clearInterval(G.iv);let win=0,mx=-1;for(const t in
 const holder=k=>{let f=null;for(const i in D.roles){const r=D.roles[i];if(r===k)f=+i;else if(r==='tt'&&/^t[1-4]$/.test(k)&&D.tos[i]==k[1])f=+i}return f};
 const label=i=>{const r=D.roles[i],t=D.tos[i];return r==='tt'?'Tổ trưởng tổ '+t:r?ROLES[r]:(t?'Thành viên tổ '+t:'Học sinh')};
 const whoName=u=>u==='admin'?'Giáo viên chủ nhiệm':NAMES[u];
-function logH(u,a,d){D.his.push({ts:Date.now(),who:whoName(u),a:a,d:d});if(D.his.length>2000)D.his.splice(0,D.his.length-2000);save();wss.clients.forEach(w=>w.u==='admin'&&to(w,{t:'h1',h:D.his[D.his.length-1]}))}
+function logH(u,a,d){D.his.push({ts:Date.now(),who:whoName(u),a:a,d:d});if(D.his.length>2000)D.his.splice(0,D.his.length-2000);save();if(SHEETS_URL)pushSheet({kind:'his',row:hisRow(D.his[D.his.length-1])});wss.clients.forEach(w=>w.u==='admin'&&to(w,{t:'h1',h:D.his[D.his.length-1]}))}
 const pushRoster=()=>bc({t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});
 const pushReports=()=>bc({t:'reports',list:D.reports,rem:D.rem});
 const boxView=x=>({id:x.id,ts:x.ts,anon:x.from===null,name:x.from===null?null:NAMES[x.from],text:x.text,rd:!!x.rd});
@@ -53,6 +53,7 @@ const LEG=['Nề nếp, chuyên cần','Học tập','Phong trào','Ý kiến, �
 const FORMS={tq:['Các khoản thu','Các khoản chi','Số dư quỹ hiện tại','Ghi chú'],lphp:['Tình hình học tập'],lppt:['Tình hình trực nhật'],pvn:['Tình hình tham gia phong trào','Các hoạt động sắp tới']};
 const repRow=r=>{const L=(r.v===2&&FORMS[r.mk])||LEG;return{id:r.id,tuan:r.tuan,ngay:r.ngay||'',muc:r.dv,ten:r.ten,nd:[r.f1,r.f2,r.f3,r.f4].map((v,i)=>L[i]&&v?L[i]+': '+v:'').filter(Boolean).join('\n'),nx:D.rem[r.id]||'',ts:vnTime(r.ts)}};
 const boxRow=x=>({id:x.id,ts:vnTime(x.ts),ten:x.from===null?'Ẩn danh':NAMES[x.from],nd:x.text});
+const hisRow=h=>{let n=0;const k=h.who+'|'+h.a+'|'+h.d;for(let i=0;i<k.length;i++)n=(n*31+k.charCodeAt(i))>>>0;return{id:'h'+h.ts+'-'+n.toString(36),ts:vnTime(h.ts),ten:h.who||'',hd:h.a||'',nd:h.d||''}};
 async function pushSheet(o){if(!SHEETS_URL||typeof fetch!=='function')return false;
  try{const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:SHEETS_KEY},o)),redirect:'follow',signal:AbortSignal.timeout(30000)});
   return /"ok"\s*:\s*true/.test(await r.text())}catch(e){return false}}
@@ -111,7 +112,7 @@ wss.on('connection',w=>{
  if(u==='admin'){
   if(m.t==='sheetsync'){if(!SHEETS_URL)return to(w,{t:'note',m:'Chưa cài SHEETS_URL trên server (xem README)'});
    to(w,{t:'note',m:'Đang gửi lên Google Sheet…'});
-   pushSheet({kind:'bulk',reports:D.reports.map(repRow),box:D.box.map(boxRow)}).then(ok=>to(w,{t:'note',m:ok?'Đã đồng bộ '+D.reports.length+' báo cáo và '+D.box.length+' góp ý lên Google Sheet ✅':'Gửi lên Google Sheet chưa được, hãy kiểm tra lại link và mã'}));return}
+   pushSheet({kind:'bulk',reports:D.reports.map(repRow),box:D.box.map(boxRow),his:D.his.map(hisRow)}).then(ok=>to(w,{t:'note',m:ok?'Đã đồng bộ '+D.reports.length+' báo cáo, '+D.box.length+' góp ý và '+D.his.length+' dòng lịch sử lên Google Sheet ✅':'Gửi lên Google Sheet chưa được, hãy kiểm tra lại link và mã'}));return}
   if(m.t==='backup'){const c=Object.assign({},D);delete c.tok;return to(w,{t:'backup',d:JSON.stringify(c)})}
   if(m.t==='restore'){let x;try{x=JSON.parse(m.data)}catch(e){return to(w,{t:'note',m:'File không hợp lệ'})}
    if(!x||typeof x!=='object'||!Array.isArray(x.reports)||!x.roles||typeof x.roles!=='object')return to(w,{t:'note',m:'File này không phải bản sao lưu của web lớp'});

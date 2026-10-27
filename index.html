@@ -129,7 +129,7 @@ td select{padding:6px 8px;min-width:120px}
 <span id="mtow"><select id="mto" style="width:auto;margin:0"><option value="">— Chọn tổ —</option><option value="1">🌸 Tổ 1</option><option value="2">⭐ Tổ 2</option><option value="3">🍀 Tổ 3</option><option value="4">🦋 Tổ 4</option></select></span>
 <button class="btn s" id="out" style="margin:0">Thoát</button></div>
 <div id="bday"></div>
-<div class="tabs" id="tabs"><button data-t="r" class="on">📝 Báo cáo</button><button data-t="l">📋 Danh sách lớp</button><button data-t="g">🎮 Trò chơi</button><button data-t="x">⬇️ Xuất báo cáo</button><button data-t="b" id="tabb">📮 Thùng góp ý<span id="bbadge"></span></button><button data-t="h" id="tabh" style="display:none">🕘 Lịch sử</button></div>
+<div class="tabs" id="tabs"><button data-t="r" class="on">📝 Báo cáo</button><button data-t="l">📋 Danh sách lớp</button><button data-t="g">🎮 Trò chơi</button><button data-t="x" id="tabx" style="display:none">⬇️ Xuất báo cáo</button><button data-t="b" id="tabb">📮 Thùng góp ý<span id="bbadge"></span></button><button data-t="h" id="tabh" style="display:none">🕘 Lịch sử</button></div>
 <section id="t-r"><div id="warnW"></div>
 <div class="card"><div class="row"><div><label>Tuần</label><input id="tuan" type="number" min="1" value="1"></div><div><label>Ngày sinh hoạt</label><input id="ngay" type="date"></div></div>
 <label>Chọn mục báo cáo</label><div id="mk" class="chips"></div>
@@ -138,8 +138,7 @@ td select{padding:6px 8px;min-width:120px}
 <button class="btn" id="save">💌 Lưu báo cáo</button></div>
 <div class="card"><label style="margin-top:0">Xem lại báo cáo theo tuần</label><select id="flt"></select></div><div id="list"></div></section>
 <section id="t-l" class="hide"><div class="card"><div class="row"><div><input id="lq" placeholder="🔍 Tìm tên bạn"></div><div><select id="lf"><option value="all">Tất cả</option><option value="1">🌸 Tổ 1</option><option value="2">⭐ Tổ 2</option><option value="3">🍀 Tổ 3</option><option value="4">🦋 Tổ 4</option><option value="bc">👑 Ban cán sự &amp; tổ trưởng</option><option value="0">Chưa xếp tổ</option></select></div></div>
-<div class="mu" id="lsum" style="margin:8px 0"></div><div class="tw"><table><thead id="lhead"></thead><tbody id="lbody"></tbody></table></div>
-<button class="btn" data-x="bday" style="margin-top:10px;background:var(--card);color:var(--tx);border:2px solid var(--bd);box-shadow:none">🎂 Xem thử lời chúc sinh nhật</button></div></section>
+<div class="mu" id="lsum" style="margin:8px 0"></div><div class="tw"><table><thead id="lhead"></thead><tbody id="lbody"></tbody></table></div></div></section>
 <section id="t-g" class="hide">
 <div class="card"><div id="g_avp"></div></div>
 <div id="g_ad" class="card" hidden><h3>🎛️ Giáo viên</h3><div id="g_rdl" style="margin-bottom:8px"></div>
@@ -197,7 +196,7 @@ function vnNow(){if(window.DEMO_KEY)return{key:DEMO_KEY,y:2026,d:+DEMO_KEY.slice
  return{key:p.day+"/"+p.month,y:+p.year,d:+p.day,m:+p.month}}
 function onMsg(m){
  switch(m.t){
- case"auth":ME={i:m.i,adm:m.adm};lset("tok12",m.token||null);$("login").hidden=true;$("app").hidden=false;$("tabh").style.display=m.adm?"":"none";$("g_ad").hidden=!m.adm;$("gvbox").style.display=m.adm?"":"none";$("bkp").hidden=!m.adm;$("g_rdc").hidden=!!m.adm;$("bform").hidden=!!m.adm;$("blist").hidden=!m.adm;renderAll();break;
+ case"auth":ME={i:m.i,adm:m.adm};lset("tok12",m.token||null);$("login").hidden=true;$("app").hidden=false;$("tabh").style.display=m.adm?"":"none";$("tabx").style.display=m.adm?"":"none";$("g_ad").hidden=!m.adm;$("gvbox").style.display=m.adm?"":"none";$("bkp").hidden=!m.adm;$("g_rdc").hidden=!!m.adm;$("bform").hidden=!!m.adm;$("blist").hidden=!m.adm;renderAll();break;
  case"roster":R={roles:m.roles||{},tos:m.tos||{},gen:m.gen||{},av:m.av||{}};if(ME)renderAll();if(window.gRav)window.gRav();break;
  case"reports":REP=m.list||[];REM=m.rem||{};if(ME){renderMk();renderWarn();renderReports()}break;
  case"wishes":WISH=m.l||[];renderBday();break;
