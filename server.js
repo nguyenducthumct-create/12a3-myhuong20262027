@@ -5,8 +5,10 @@ const BDAY=["07/09", "01/05", "11/02", "22/02", "31/10", "15/02", "29/08", "30/0
 const ADMIN_CODE=process.env.ADMIN_CODE||'ndthummh82';
 const DBF=path.join(process.env.DATA_DIR||__dirname,'data.json');
 let D={roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]};
+const FRESH=!fs.existsSync(DBF);
 try{D=Object.assign(D,JSON.parse(fs.readFileSync(DBF,'utf8')))}catch(e){}
-const save=()=>{try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){}};
+var snapReady=false,snapT=null;
+const save=()=>{try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){console.log('Không ghi được data.json:',e.message)}try{snapSoon()}catch(e){}};
 const bank=require('./bank.js');
 D.used=(D.used||[]).map(x=>typeof x==='number'?(bank[x]&&bank[x][0]):x).filter(x=>typeof x==='string');D.extra=D.extra||[];D.box=D.box||[];
 const strip=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -57,6 +59,17 @@ const hisRow=h=>{let n=0;const k=h.who+'|'+h.a+'|'+h.d;for(let i=0;i<k.length;i+
 async function pushSheet(o){if(!SHEETS_URL||typeof fetch!=='function')return false;
  try{const r=await fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:SHEETS_KEY},o)),redirect:'follow',signal:AbortSignal.timeout(30000)});
   return /"ok"\s*:\s*true/.test(await r.text())}catch(e){return false}}
+// ---- Sao lưu toàn bộ dữ liệu lên Google Sheet (trang tính 'Dữ liệu') để không mất khi Render khởi động lại ----
+function snapSoon(){if(!snapReady||!SHEETS_URL||snapT)return;snapT=setTimeout(async()=>{snapT=null;const ok=await pushSheet({kind:'state',data:JSON.stringify(D)});if(!ok){console.log('Chưa lưu được bản sao lên Google Sheet, sẽ thử lại');snapSoon()}},10000)}
+async function restoreSnap(){
+ try{const r=await fetch(SHEETS_URL+(SHEETS_URL.includes('?')?'&':'?')+'action=state&key='+encodeURIComponent(SHEETS_KEY),{redirect:'follow',signal:AbortSignal.timeout(30000)});
+  const j=JSON.parse(await r.text());if(!j||!j.ok)return false;
+  if(j.data){const x=JSON.parse(j.data);
+   D=Object.assign({roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]},x);
+   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];
+   try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){}
+   console.log('Đã khôi phục dữ liệu từ Google Sheet')}
+  return true}catch(e){console.log('Chưa đọc được bản sao Google Sheet:',e.message);return false}}
 const wishesFor=u=>{const k=vn();return D.wishes.filter(x=>(x.y===k.y&&BDAY[x.to]===k.key)||x.to===u)};
 function auth(w,i,k){w.u=i;w.tk=k;to(w,{t:'auth',i:i,n:i==='admin'?'':NAMES[i],adm:i==='admin',token:k});
  to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
@@ -139,4 +152,11 @@ wss.on('connection',w=>{
  else if(G.type==='tap'&&m.t==='tap'&&G.run){const s=Date.now()/1000|0;if(w.ts!==s){w.ts=s;w.tn=0}if(++w.tn>14)return;G.sc[u]=(G.sc[u]||0)+1;const t=D.tos[u]||0;G.team[t]=(G.team[t]||0)+1}
  });
  w.on('close',()=>{online()})});
-server.listen(process.env.PORT||3000,()=>console.log('Chạy tại http://localhost:'+(process.env.PORT||3000)+' | đăng nhập giáo viên bằng mã ADMIN_CODE'));
+const listen=()=>server.listen(process.env.PORT||3000,()=>console.log('Chạy tại http://localhost:'+(process.env.PORT||3000)+' | đăng nhập giáo viên bằng mã ADMIN_CODE'));
+(async()=>{
+ if(!SHEETS_URL){console.log('CẢNH BÁO: chưa đặt SHEETS_URL; nếu không có ổ đĩa (DATA_DIR) dữ liệu sẽ mất khi server khởi động lại');return listen()}
+ if(!FRESH){snapReady=true;snapSoon();return listen()}
+ let ok=false;for(let n=0;n<3&&!ok;n++)ok=await restoreSnap();
+ if(ok){snapReady=true;snapSoon();return listen()}
+ listen();
+ const iv=setInterval(async()=>{if(await restoreSnap()){clearInterval(iv);snapReady=true;snapSoon();pushRoster();pushReports()}},30000)})();
