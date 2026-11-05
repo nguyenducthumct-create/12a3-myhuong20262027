@@ -122,7 +122,7 @@ td select{padding:6px 8px;min-width:120px}
 .tkb .hb{background:#ddd0f6}.tkb .ht{background:#ffd0e1}.tkb .hr .hb,.tkb .hr .ht{font-size:8px;letter-spacing:-.5px}.tkb .hb,.tkb .ht{width:7.5%}
 .tkb .bS{background:#fdeeb0;font-size:16px;font-size:clamp(13px,4vw,22px)}.tkb .bC{background:#d9ccf5;font-size:16px;font-size:clamp(13px,4vw,22px)}
 .tkb .d0{background:#bfe6fb}.tkb .d1{background:#c9ecd3}.tkb .d2{background:#fdf0a8}.tkb .d3{background:#d9cff7}.tkb .d4{background:#ffc9dc}.tkb .d5{background:#c9ecd3}
-.tkb td{background:#fbfcff;border-color:#e3e9f5}.tkb td.has{font-weight:700;font-size:.88em;letter-spacing:-.5px;border-color:transparent;box-shadow:0 1px 0 rgba(31,42,77,.08)}
+.tkb td{background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,.55)),#fff url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2724%27%20height=%2724%27%3E%3Cg%20fill=%27%23ffc9dd%27%3E%3Ccircle%20cx=%276%27%20cy=%273.6%27%20r=%271.7%27/%3E%3Ccircle%20cx=%278.4%27%20cy=%276%27%20r=%271.7%27/%3E%3Ccircle%20cx=%276%27%20cy=%278.4%27%20r=%271.7%27/%3E%3Ccircle%20cx=%273.6%27%20cy=%276%27%20r=%271.7%27/%3E%3C/g%3E%3Ccircle%20cx=%276%27%20cy=%276%27%20r=%271.1%27%20fill=%27%23ffe08a%27/%3E%3Cg%20fill=%27%23bfdcff%27%3E%3Ccircle%20cx=%2718%27%20cy=%2715.6%27%20r=%271.7%27/%3E%3Ccircle%20cx=%2720.4%27%20cy=%2718%27%20r=%271.7%27/%3E%3Ccircle%20cx=%2718%27%20cy=%2720.4%27%20r=%271.7%27/%3E%3Ccircle%20cx=%2715.6%27%20cy=%2718%27%20r=%271.7%27/%3E%3C/g%3E%3Ccircle%20cx=%2718%27%20cy=%2718%27%20r=%271.1%27%20fill=%27%23ffe08a%27/%3E%3C/svg%3E") repeat;background-size:auto,30px 30px;border-color:#d5dff0}.tkb td.has{font-weight:700;font-size:.92em;letter-spacing:-.4px}
 .tkb input{width:100%;box-sizing:border-box;font:inherit;text-align:center;padding:3px 0;margin:0;color:#1f2a4d;background:#fff;border:1px solid #9fb0cc;border-radius:5px;min-width:0}
 .tabs button[data-n]::after{content:attr(data-n);background:#ff3b5c;color:#fff;border-radius:99px;padding:0 6px;font-size:11px;margin-left:5px;animation:pls 1.3s infinite}
 @keyframes pls{50%{transform:scale(1.25)}}
@@ -251,12 +251,10 @@ var TKB=null,tkbEdit=false,TKBD=["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 
 function tkbCan(){return!!ME&&(ME.adm||R.roles[ME.i]==="lt")}
 function tkbToday(){var dw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"})).getDay();return dw>=1&&dw<=6?dw-1:-1}
 function tkbHead(td){return'<tr class="hr"><th class="hb">Buổi</th><th class="ht">Tiết</th>'+TKBD.map(function(d,j){return'<th class="d'+j+(j===td?" td":"")+'">'+d+"</th>"}).join("")+"</tr>"}
-var TKBPAL=["#ffd9c9","#ffd6e8","#d6ecff","#fff0b8","#d8f3d0","#e3d9ff","#cdf0ea","#ffe4cf","#e8f0c8","#f6d9f2"],TKBIDX={"toán":0,"ngữ văn":1,"anh văn":2,"lịch sử":3,"địa lí":4,"vật lí":5,"gdktpl":6,"hđtnhn":7,"tin học":8,"chào cờ":9,"shl":9,"gđtc":7,"gdqpan":3,"gdđp":6};
-function tkbCol(v){var k=String(v).trim().toLowerCase();if(k===""||k.length>40)return"";if(TKBIDX[k]!==undefined)return TKBPAL[TKBIDX[k]];var s=0;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))%997;return TKBPAL[s%TKBPAL.length]}
 function tkbHtml(edit){var td=-1,h='<div class="tkbx"><img class="tkbi" alt="Thời khóa biểu lớp 12A3" src="'+TKB_TOP+'"><div class="tkbm"><table class="tkb"><tbody>';
  ["S","C"].forEach(function(b){h+=tkbHead(td);
   for(var r=0;r<5;r++){h+="<tr>"+(r===0?'<th class="b'+b+'" rowspan="5">'+b+"</th>":"")+'<th class="ht">'+(r+1)+"</th>";
-   for(var c=0;c<6;c++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][c])||"";var bg=tkbCol(v);h+=(edit||!bg?"<td>":'<td class="has" style="background:'+bg+'">')+(edit?'<input data-b="'+b+'" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" maxlength="24">':esc(v))+"</td>"}h+="</tr>"}});
+   for(var c=0;c<6;c++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][c])||"";h+=(edit||!v?"<td>":'<td class="has">')+(edit?'<input data-b="'+b+'" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" maxlength="24">':esc(v))+"</td>"}h+="</tr>"}});
  return h+'</tbody></table></div><img class="tkbi" alt="" src="'+TKB_BOT+'"></div>'}
 var TKBIM=null;
 function tkbPre(){if(TKBIM)return;TKBIM={};[["T",TKB_TOP],["B",TKB_BOT]].forEach(function(p){var im=new Image();im.src=p[1];TKBIM[p[0]]=im})}
@@ -266,6 +264,9 @@ function tkbSave(){tkbPre();var T=TKBIM.T,B=TKBIM.B,ok=function(im){return im&&i
  var c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
  function rr(a,b,w,h,r,f,s,lw){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();if(f){x.fillStyle=f;x.fill()}if(s){x.lineWidth=lw||1;x.strokeStyle=s;x.stroke()}}
  function tx(t,cx,cy,w,fs,bold){var f=fs;do{x.font=(bold?"700 ":"400 ")+f+'px "Times New Roman","Noto Serif",Georgia,serif';f--}while(x.measureText(t).width>w&&f>12);x.fillStyle="#1f2a4d";x.textAlign="center";x.textBaseline="middle";x.fillText(t,cx,cy)}
+ var tl=document.createElement("canvas");tl.width=tl.height=36;var tc=tl.getContext("2d"),ts=36/24;
+ function fl(cx0,cy0,col){tc.fillStyle=col;[[0,-2.4],[2.4,0],[0,2.4],[-2.4,0]].forEach(function(o){tc.beginPath();tc.arc((cx0+o[0])*ts,(cy0+o[1])*ts,1.7*ts,0,6.2832);tc.fill()});tc.fillStyle="#ffe08a";tc.beginPath();tc.arc(cx0*ts,cy0*ts,1.1*ts,0,6.2832);tc.fill()}
+ fl(6,6,"#ffc9dd");fl(18,18,"#bfdcff");var pat=x.createPattern(tl,"repeat");
  x.save();rr(0,0,W,H,26,"#fcfdf3");x.clip();
  if(ok(T))x.drawImage(T,0,0,W,th);if(ok(B))x.drawImage(B,0,H-bh,W,bh);
  rr(P,th+8,W-2*P,tH,16,"#f4f7fd","#2d3a5e",3);
@@ -276,7 +277,7 @@ function tkbSave(){tkbPre();var T=TKBIM.T,B=TKBIM.B,ok=function(im){return im&&i
   TKBD.forEach(function(d,k){rr(cx(k),Y,cW,hh,9,DC[k],"#c3d0e8");tx(d,cx(k)+cW/2,Y+hh/2,cW-8,20,true)});
   rr(X0,Y+hh+G,cB,5*(rh+G)-G,9,b==="S"?"#fdeeb0":"#d9ccf5","#c3d0e8");tx(b,X0+cB/2,Y+hh+G+(5*(rh+G)-G)/2,cB,40,true);
   for(var r=0;r<5;r++){var y=Y+hh+G+r*(rh+G);rr(X0+cB+G,y,cT,rh,9,"#ffd0e1","#c3d0e8");tx(String(r+1),X0+cB+G+cT/2,y+rh/2,cT,22,true);
-   for(var k=0;k<6;k++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][k])||"",bg=tkbCol(v);rr(cx(k),y,cW,rh,9,bg||"#fbfcff",bg?null:"#e3e9f5");if(v)tx(v,cx(k)+cW/2,y+rh/2,cW-10,22,true)}}});
+   for(var k=0;k<6;k++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][k])||"";rr(cx(k),y,cW,rh,9,"#fff");rr(cx(k),y,cW,rh,9,pat);rr(cx(k),y,cW,rh,9,"rgba(255,255,255,.55)","#d5dff0");if(v)tx(v,cx(k)+cW/2,y+rh/2,cW-10,22,true)}}});
  x.restore();rr(1.5,1.5,W-3,H-3,26,null,"#cfe6f3",3);
  var u=c.toDataURL("image/png"),p=u.split(","),bin=atob(p[1]),n=bin.length,a=new Uint8Array(n);while(n--)a[n]=bin.charCodeAt(n);
  var f;try{f=new File([a],"thoi-khoa-bieu-12A3.png",{type:"image/png"})}catch(e){f=new Blob([a],{type:"image/png"})}
