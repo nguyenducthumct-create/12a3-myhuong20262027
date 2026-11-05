@@ -118,12 +118,11 @@ td select{padding:6px 8px;min-width:120px}
 .tkbi{display:block;width:100%;height:auto}.tkbm{margin:2px 4px 4px;padding:1px;border:2px solid #2d3a5e;border-radius:12px;background:#f4f7fd}
 .tkb{width:100%;border-collapse:separate;border-spacing:2px;border:0;font-family:"Times New Roman","Noto Serif",Georgia,serif;font-size:9.5px;font-size:clamp(8.5px,2.5vw,15px);letter-spacing:-.3px;background:transparent;table-layout:fixed}
 .tkb th,.tkb td{text-align:center;border:1px solid #c3d0e8;border-radius:9px;padding:5px 1px;height:30px;color:#1f2a4d;white-space:nowrap;overflow:hidden;vertical-align:middle;line-height:1.25;position:relative}
-.tkb .tf{position:absolute;top:0;right:1px;font-size:9px;line-height:1;font-style:normal;opacity:.95}
 .tkb th{font-weight:700}.tkb .hr th{font-size:10px;font-size:clamp(9px,2.7vw,15px);padding:6px 1px}
 .tkb .hb{background:#ddd0f6}.tkb .ht{background:#ffd0e1}.tkb .hr .hb,.tkb .hr .ht{font-size:8px;letter-spacing:-.5px}.tkb .hb,.tkb .ht{width:7.5%}
 .tkb .bS{background:#fdeeb0;font-size:16px;font-size:clamp(13px,4vw,22px)}.tkb .bC{background:#d9ccf5;font-size:16px;font-size:clamp(13px,4vw,22px)}
 .tkb .d0{background:#bfe6fb}.tkb .d1{background:#c9ecd3}.tkb .d2{background:#fdf0a8}.tkb .d3{background:#d9cff7}.tkb .d4{background:#ffc9dc}.tkb .d5{background:#c9ecd3}
-.tkb td{background:#fff}
+.tkb td{background:#fbfcff;border-color:#e3e9f5}.tkb td.has{font-weight:700;font-size:.88em;letter-spacing:-.5px;border-color:transparent;box-shadow:0 1px 0 rgba(31,42,77,.08)}
 .tkb input{width:100%;box-sizing:border-box;font:inherit;text-align:center;padding:3px 0;margin:0;color:#1f2a4d;background:#fff;border:1px solid #9fb0cc;border-radius:5px;min-width:0}
 .tabs button[data-n]::after{content:attr(data-n);background:#ff3b5c;color:#fff;border-radius:99px;padding:0 6px;font-size:11px;margin-left:5px;animation:pls 1.3s infinite}
 @keyframes pls{50%{transform:scale(1.25)}}
@@ -252,16 +251,40 @@ var TKB=null,tkbEdit=false,TKBD=["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 
 function tkbCan(){return!!ME&&(ME.adm||R.roles[ME.i]==="lt")}
 function tkbToday(){var dw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"})).getDay();return dw>=1&&dw<=6?dw-1:-1}
 function tkbHead(td){return'<tr class="hr"><th class="hb">Buổi</th><th class="ht">Tiết</th>'+TKBD.map(function(d,j){return'<th class="d'+j+(j===td?" td":"")+'">'+d+"</th>"}).join("")+"</tr>"}
-var TKBFL={"toán":"🌻","ngữ văn":"🌸","anh văn":"🌷","lịch sử":"🌼","địa lí":"🌺","vật lí":"💐","gdktpl":"🌹","hđtnhn":"🏵️","tin học":"🪴","gđtc":"🌿","gdqpan":"🍀","gdđp":"🌾","shl":"🌱","chào cờ":"🚩"};
-var TKBFA=["🌸","🌼","🌷","🌺","🌻","💐","🌹","🏵️"];
-function tkbFl(v){var k=String(v).trim().toLowerCase();if(TKBFL[k])return TKBFL[k];var s=0;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))%997;return TKBFA[s%TKBFA.length]}
+var TKBPAL=["#ffd9c9","#ffd6e8","#d6ecff","#fff0b8","#d8f3d0","#e3d9ff","#cdf0ea","#ffe4cf","#e8f0c8","#f6d9f2"],TKBIDX={"toán":0,"ngữ văn":1,"anh văn":2,"lịch sử":3,"địa lí":4,"vật lí":5,"gdktpl":6,"hđtnhn":7,"tin học":8,"chào cờ":9,"shl":9,"gđtc":7,"gdqpan":3,"gdđp":6};
+function tkbCol(v){var k=String(v).trim().toLowerCase();if(k===""||k.length>40)return"";if(TKBIDX[k]!==undefined)return TKBPAL[TKBIDX[k]];var s=0;for(var i=0;i<k.length;i++)s=(s*31+k.charCodeAt(i))%997;return TKBPAL[s%TKBPAL.length]}
 function tkbHtml(edit){var td=-1,h='<div class="tkbx"><img class="tkbi" alt="Thời khóa biểu lớp 12A3" src="'+TKB_TOP+'"><div class="tkbm"><table class="tkb"><tbody>';
  ["S","C"].forEach(function(b){h+=tkbHead(td);
   for(var r=0;r<5;r++){h+="<tr>"+(r===0?'<th class="b'+b+'" rowspan="5">'+b+"</th>":"")+'<th class="ht">'+(r+1)+"</th>";
-   for(var c=0;c<6;c++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][c])||"";h+="<td>"+(edit?'<input data-b="'+b+'" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" maxlength="24">':(v?'<i class="tf">'+tkbFl(v)+"</i>":"")+esc(v))+"</td>"}h+="</tr>"}});
+   for(var c=0;c<6;c++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][c])||"";var bg=tkbCol(v);h+=(edit||!bg?"<td>":'<td class="has" style="background:'+bg+'">')+(edit?'<input data-b="'+b+'" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" maxlength="24">':esc(v))+"</td>"}h+="</tr>"}});
  return h+'</tbody></table></div><img class="tkbi" alt="" src="'+TKB_BOT+'"></div>'}
-function renderTkb(){var el=$("tkbhome");if(!el||!TKB)return;var can=tkbCan();
- el.innerHTML=(can?'<div class="tkbtools">'+(tkbEdit?'<button class="btn" id="tkbbtn">💾 Lưu</button><button class="btn s" id="tkbcx">Hủy</button><span class="mu">Gõ vào ô, ô trống là không có tiết.</span>':'<button class="btn s" id="tkbbtn">✏️ Chỉnh sửa thời khóa biểu</button>')+"</div>":"")+tkbHtml(tkbEdit);
+var TKBIM=null;
+function tkbPre(){if(TKBIM)return;TKBIM={};[["T",TKB_TOP],["B",TKB_BOT]].forEach(function(p){var im=new Image();im.src=p[1];TKBIM[p[0]]=im})}
+function tkbSave(){tkbPre();var T=TKBIM.T,B=TKBIM.B,ok=function(im){return im&&im.complete&&im.naturalWidth>0},W=1100,P=14,G=4,
+ th=ok(T)?Math.round(T.naturalHeight*W/T.naturalWidth):0,bh=ok(B)?Math.round(B.naturalHeight*W/B.naturalWidth):0,
+ inW=W-2*P-16,cB=64,cT=52,cW=(inW-cB-cT-7*G)/6,hh=46,rh=62,blk=hh+G+5*(rh+G),tH=2*blk+G+16,H=th+8+tH+8+bh;
+ var c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
+ function rr(a,b,w,h,r,f,s,lw){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();if(f){x.fillStyle=f;x.fill()}if(s){x.lineWidth=lw||1;x.strokeStyle=s;x.stroke()}}
+ function tx(t,cx,cy,w,fs,bold){var f=fs;do{x.font=(bold?"700 ":"400 ")+f+'px "Times New Roman","Noto Serif",Georgia,serif';f--}while(x.measureText(t).width>w&&f>12);x.fillStyle="#1f2a4d";x.textAlign="center";x.textBaseline="middle";x.fillText(t,cx,cy)}
+ x.save();rr(0,0,W,H,26,"#fcfdf3");x.clip();
+ if(ok(T))x.drawImage(T,0,0,W,th);if(ok(B))x.drawImage(B,0,H-bh,W,bh);
+ rr(P,th+8,W-2*P,tH,16,"#f4f7fd","#2d3a5e",3);
+ var X0=P+8,DC=["#bfe6fb","#c9ecd3","#fdf0a8","#d9cff7","#ffc9dc","#c9ecd3"],cx=function(k){return X0+cB+G+cT+G+k*(cW+G)};
+ ["S","C"].forEach(function(b,bi){var Y=th+8+8+bi*(blk+G);
+  rr(X0,Y,cB,hh,9,"#ddd0f6","#c3d0e8");tx("Buổi",X0+cB/2,Y+hh/2,cB-8,18,true);
+  rr(X0+cB+G,Y,cT,hh,9,"#ffd0e1","#c3d0e8");tx("Tiết",X0+cB+G+cT/2,Y+hh/2,cT-8,18,true);
+  TKBD.forEach(function(d,k){rr(cx(k),Y,cW,hh,9,DC[k],"#c3d0e8");tx(d,cx(k)+cW/2,Y+hh/2,cW-8,20,true)});
+  rr(X0,Y+hh+G,cB,5*(rh+G)-G,9,b==="S"?"#fdeeb0":"#d9ccf5","#c3d0e8");tx(b,X0+cB/2,Y+hh+G+(5*(rh+G)-G)/2,cB,40,true);
+  for(var r=0;r<5;r++){var y=Y+hh+G+r*(rh+G);rr(X0+cB+G,y,cT,rh,9,"#ffd0e1","#c3d0e8");tx(String(r+1),X0+cB+G+cT/2,y+rh/2,cT,22,true);
+   for(var k=0;k<6;k++){var v=(TKB[b]&&TKB[b][r]&&TKB[b][r][k])||"",bg=tkbCol(v);rr(cx(k),y,cW,rh,9,bg||"#fbfcff",bg?null:"#e3e9f5");if(v)tx(v,cx(k)+cW/2,y+rh/2,cW-10,22,true)}}});
+ x.restore();rr(1.5,1.5,W-3,H-3,26,null,"#cfe6f3",3);
+ var u=c.toDataURL("image/png"),p=u.split(","),bin=atob(p[1]),n=bin.length,a=new Uint8Array(n);while(n--)a[n]=bin.charCodeAt(n);
+ var f;try{f=new File([a],"thoi-khoa-bieu-12A3.png",{type:"image/png"})}catch(e){f=new Blob([a],{type:"image/png"})}
+ function dl(){var el=document.createElement("a");el.href=URL.createObjectURL(f);el.download="thoi-khoa-bieu-12A3.png";document.body.appendChild(el);el.click();setTimeout(function(){URL.revokeObjectURL(el.href);el.remove()},2500);toast("Đã lưu ảnh thời khóa biểu 📷")}
+ if(/iPhone|iPad|Android/i.test(navigator.userAgent)&&navigator.canShare&&f instanceof File&&navigator.canShare({files:[f]}))navigator.share({files:[f]}).catch(function(e){if(!e||e.name!=="AbortError")dl()});else dl()}
+function renderTkb(){var el=$("tkbhome");if(!el||!TKB)return;var can=tkbCan();tkbPre();
+ el.innerHTML='<div class="tkbtools">'+(can?(tkbEdit?'<button class="btn" id="tkbbtn">💾 Lưu</button><button class="btn s" id="tkbcx">Hủy</button><span class="mu">Gõ vào ô, ô trống là không có tiết.</span>':'<button class="btn s" id="tkbbtn">✏️ Chỉnh sửa thời khóa biểu</button>'):"")+(tkbEdit?"":'<button class="btn s" id="tkbsv">📷 Lưu ảnh</button>')+"</div>"+tkbHtml(tkbEdit);
+ var sv=$("tkbsv");if(sv)sv.onclick=tkbSave;
  var b=$("tkbbtn");if(b)b.onclick=function(){
   if(!tkbEdit){tkbEdit=true;renderTkb();return}
   var d={n:(TKB&&TKB.n)||"",S:[[],[],[],[],[]],C:[[],[],[],[],[]]};
