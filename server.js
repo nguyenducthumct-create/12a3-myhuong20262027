@@ -9,7 +9,7 @@ const FRESH=!fs.existsSync(DBF);
 try{D=Object.assign(D,JSON.parse(fs.readFileSync(DBF,'utf8')))}catch(e){}
 var snapReady=false,snapT=null;
 // Thời khóa biểu mặc định (năm học 2026-2027, áp dụng 12/10/2026). Hàng = tiết 1-5, cột = Thứ 2 đến Thứ 7
-const DEFTKB={n:'Năm học 2026-2027, áp dụng ngày 12/10/2026',
+const DEFTKB={n:'',yr:'2026-2027',ad:'12/10/2026',
  S:[['Chào cờ','Lịch Sử','GDKTPL','Ngữ văn','Toán',''],['Toán','Vật lí','Địa Lí','Ngữ văn','Toán',''],['Lịch Sử','Ngữ văn','Anh văn','GDKTPL','Địa Lí',''],['HĐTNHN','GDKTPL','Anh văn','Địa Lí','Anh văn',''],['Vật lí','','','Lịch Sử','SHL','']],
  C:[['','','GĐTC','','',''],['','','GĐTC','','Tin học',''],['','','GDQPAN','','Tin học',''],['','','','','GDĐP',''],['','','','','','']]};
 if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
@@ -21,7 +21,7 @@ const strip=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace
 const codeOf=i=>strip(NAMES[i].split(' ').pop())+BDAY[i].replace('/','');
 const vn=()=>{const d=new Date(Date.now()+7*3600e3);return{key:('0'+d.getUTCDate()).slice(-2)+'/'+('0'+(d.getUTCMonth()+1)).slice(-2),y:d.getUTCFullYear()}};
 const tk=()=>Math.random().toString(36).slice(2)+Date.now().toString(36);
-const ROLES={lt:'Lớp trưởng',lphp:'Lớp phó học tập',lppt:'Lớp phó lao động',pvn:'Phó văn nghệ - Phong trào',tq:'Thủ quỹ',tt:'Tổ trưởng'};
+const ROLES={lt:'Lớp trưởng',lphp:'Lớp phó học tập',lppt:'Lớp phó lao động',pvn:'Phó Phong Trào',tq:'Thủ quỹ',tt:'Tổ trưởng'};
 const MUC=['lt','lphp','lppt','pvn','tq','t1','t2','t3','t4'];
 for(const i in D.roles)if(D.roles[i]==='cntt')delete D.roles[i];
 if(!D.seeded){D.seeded=1;D.roles={26:'lt',38:'lphp',0:'tq',37:'tt',34:'tt',29:'lppt',17:'pvn',19:'tt',11:'tt'};D.tos={37:1,34:2,11:3,19:4};save()}
@@ -104,7 +104,7 @@ wss.on('connection',w=>{
  // Sửa thời khóa biểu: giáo viên hoặc lớp trưởng
  if(m.t==='tkb'){if(!(adm||D.roles[u]==='lt'))return to(w,{t:'err',m:'Chỉ lớp trưởng và giáo viên được sửa thời khóa biểu.'});
   const cl=g=>Array.from({length:5},(_,r)=>Array.from({length:6},(_,c)=>String(((m.d&&m.d[g]&&m.d[g][r])||[])[c]||'').replace(/\s+/g,' ').trim().slice(0,24)));
-  D.tkb={n:String((m.d&&m.d.n)||'').trim().slice(0,60),S:cl('S'),C:cl('C')};logH(u,'Sửa thời khóa biểu','');save();return bc({t:'tkb',d:D.tkb})}
+  const t1=k=>String((m.d&&m.d[k])||'').replace(/\s+/g,' ').trim().slice(0,20);D.tkb={n:t1('n'),yr:t1('yr'),ad:t1('ad'),S:cl('S'),C:cl('C')};logH(u,'Sửa thời khóa biểu','');save();return bc({t:'tkb',d:D.tkb})}
  if(m.t==='av'&&!adm){const n=+m.n;if(n>=0&&n<300){D.av[u]=n;save();pushRoster();online()}return}
  if(m.t==='to'){const i=+m.i;if(!(i>=0&&i<NAMES.length))return;const t=[1,2,3,4].includes(+m.to)?+m.to:0;
   const mine=(!adm&&D.roles[u]==='tt')?D.tos[u]:null;
