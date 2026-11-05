@@ -13,6 +13,7 @@ const DEFTKB={n:'Năm học 2026-2027, áp dụng ngày 12/10/2026',
  S:[['Chào cờ','Lịch Sử','GDKTPL','Ngữ văn','Toán',''],['Toán','Vật lí','Địa Lí','Ngữ văn','Toán',''],['Lịch Sử','Ngữ văn','Anh văn','GDKTPL','Địa Lí',''],['HĐTNHN','GDKTPL','Anh văn','Địa Lí','Anh văn',''],['Vật lí','','','Lịch Sử','SHL','']],
  C:[['','','GĐTC','','',''],['','','GĐTC','','Tin học',''],['','','GDQPAN','','Tin học',''],['','','','','GDĐP',''],['','','','','','']]};
 if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
+if(!D.notices)D.notices=[];
 const save=()=>{try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){console.log('Không ghi được data.json:',e.message)}try{snapSoon()}catch(e){}};
 const bank=require('./bank.js');
 D.used=(D.used||[]).map(x=>typeof x==='number'?(bank[x]&&bank[x][0]):x).filter(x=>typeof x==='string');D.extra=D.extra||[];D.box=D.box||[];
@@ -32,7 +33,7 @@ const bc=m=>wss.clients.forEach(w=>w.u!==undefined&&to(w,m));
 const topOf=sc=>Object.entries(sc).map(([i,s])=>({n:NAMES[i],s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,10);
 const board=()=>Object.entries(D.total).map(([i,s])=>({n:NAMES[i],to:D.tos[i]||0,s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,15);
 let G=null;
-function endGame(x){if(!G)return;clearTimeout(G.tm);clearInterval(G.iv);for(const i in G.sc)D.total[i]=(D.total[i]||0)+G.sc[i];save();bc(Object.assign({t:'end',g:G.type,win3:topOf(G.sc).filter(r=>r.s>0).slice(0,3)},x));wss.clients.forEach(c=>{c.rd=false});online();G=null;bc({t:'board',b:board()})}
+function endGame(x){if(!G)return;clearTimeout(G.tm);clearInterval(G.iv);for(const i in G.sc)D.total[i]=(D.total[i]||0)+G.sc[i];save();bc(Object.assign({t:'end',g:G.type,win3:topOf(G.sc).filter(r=>r.s>0).slice(0,3),rank:topOf(G.sc).filter(r=>r.s>0)},x));wss.clients.forEach(c=>{c.rd=false});online();G=null;bc({t:'board',b:board()})}
 function parseQ(t){const a=String(t||'').split('\n').map(l=>l.split('|').map(s=>s.trim())).filter(p=>p.length>=6&&[1,2,3,4].includes(+p[5])).map(p=>[p[0],p[1],p[2],p[3],p[4],+p[5]]);return a}
 const allBank=()=>bank.concat(D.extra);
 // Câu đã hỏi (D.used) bị loại khỏi kho, không bao giờ hỏi lại trừ khi giáo viên bấm 'Làm mới kho'
@@ -46,7 +47,7 @@ function revealQ(){if(G.rv)return;G.rv=true;clearTimeout(G.tm);const gain={};
  const ok=Object.keys(G.ans).filter(i=>G.ans[i].c===G.cc).map(i=>({i:+i,ms:G.ans[i].ms})).sort((a,b)=>a.ms-b.ms);
  const ord=ok.map(r=>{const p=Math.max(500,Math.round(1000-(r.ms-ok[0].ms)/10));gain[r.i]=p;G.sc[r.i]=(G.sc[r.i]||0)+p;return{i:r.i,n:NAMES[r.i],ms:r.ms,p}});
  bc({t:'qr',ans:G.cc,gain,win:ord[0]||null,ord:ord.slice(0,5),top:topOf(G.sc)});G.tm=setTimeout(nextQ,4500)}
-function tap(){G={type:'tap',sc:{},team:{},run:false};bc({t:'tap',ph:'count'});G.tm=setTimeout(()=>{G.run=true;bc({t:'tap',ph:'go',sec:15});G.iv=setInterval(()=>bc({t:'tapS',team:G.team}),400);G.tm=setTimeout(tapEnd,15000)},3000)}
+function tap(){G={type:'tap',sc:{},team:{},run:false};bc({t:'tap',ph:'count'});G.tm=setTimeout(()=>{G.run=true;bc({t:'tap',ph:'go',sec:15});G.iv=setInterval(()=>bc({t:'tapS',team:G.team,top:topOf(G.sc)}),400);G.tm=setTimeout(tapEnd,15000)},3000)}
 function tapEnd(){G.run=false;clearInterval(G.iv);let win=0,mx=-1;for(const t in G.team)if(G.team[t]>mx){mx=G.team[t];win=t}for(const i in G.sc)if(D.tos[i]==win)G.sc[i]+=200;endGame({team:G.team,win})}
 
 const holder=k=>{let f=null;for(const i in D.roles){const r=D.roles[i];if(r===k)f=+i;else if(r==='tt'&&/^t[1-4]$/.test(k)&&D.tos[i]==k[1])f=+i}return f};
@@ -75,13 +76,13 @@ async function restoreSnap(){
   const j=JSON.parse(await r.text());if(!j||!j.ok)return false;
   if(j.data){const x=JSON.parse(j.data);
    D=Object.assign({roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]},x);
-   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
+   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));if(!D.notices)D.notices=[];
    try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){}
    console.log('Đã khôi phục dữ liệu từ Google Sheet')}
   return true}catch(e){console.log('Chưa đọc được bản sao Google Sheet:',e.message);return false}}
 const wishesFor=u=>{const k=vn();return D.wishes.filter(x=>(x.y===k.y&&BDAY[x.to]===k.key)||x.to===u)};
 function auth(w,i,k){w.u=i;w.tk=k;to(w,{t:'auth',i:i,n:i==='admin'?'':NAMES[i],adm:i==='admin',token:k});
- to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'tkb',d:D.tkb});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
+ to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'tkb',d:D.tkb});to(w,{t:'notices',l:D.notices});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
  if(i==='admin'){to(w,{t:'cfg',sheets:!!SHEETS_URL});to(w,{t:'hist',l:D.his});to(w,{t:'box',l:D.box.map(boxView)});sendBank()}
  if(G)to(w,{t:'busy',g:G.type});online()}
 wss.on('connection',w=>{
@@ -93,6 +94,13 @@ wss.on('connection',w=>{
   if(m.t==='resume'&&D.tok[m.token]!==undefined)return auth(w,D.tok[m.token],m.token);
   return to(w,{t:'relogin'})}
  const u=w.u,adm=u==='admin';
+ // Thông báo của trường: chỉ giáo viên đăng / sửa / xóa
+ if(m.t==='notice'){if(!adm)return;const title=String(m.title||'').replace(/\s+/g,' ').trim().slice(0,100),text=String(m.text||'').trim().slice(0,1500);
+  if(!title&&!text)return to(w,{t:'note',m:'Hãy nhập nội dung thông báo'});
+  if(m.id){const n=D.notices.find(x=>x.id===m.id);if(!n)return;n.title=title;n.text=text;n.up=Date.now()}
+  else{D.notices.unshift({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),title,text,ts:Date.now()});D.notices=D.notices.slice(0,50)}
+  logH(u,m.id?'Sửa thông báo':'Đăng thông báo',title||text.slice(0,40));save();return bc({t:'notices',l:D.notices})}
+ if(m.t==='delnotice'){if(!adm)return;const n=D.notices.find(x=>x.id===m.id);if(!n)return;D.notices=D.notices.filter(x=>x.id!==m.id);logH(u,'Xóa thông báo',n.title||'');save();return bc({t:'notices',l:D.notices})}
  // Sửa thời khóa biểu: giáo viên hoặc lớp trưởng
  if(m.t==='tkb'){if(!(adm||D.roles[u]==='lt'))return to(w,{t:'err',m:'Chỉ lớp trưởng và giáo viên được sửa thời khóa biểu.'});
   const cl=g=>Array.from({length:5},(_,r)=>Array.from({length:6},(_,c)=>String(((m.d&&m.d[g]&&m.d[g][r])||[])[c]||'').replace(/\s+/g,' ').trim().slice(0,24)));
