@@ -8,6 +8,11 @@ let D={roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],
 const FRESH=!fs.existsSync(DBF);
 try{D=Object.assign(D,JSON.parse(fs.readFileSync(DBF,'utf8')))}catch(e){}
 var snapReady=false,snapT=null;
+// Thời khóa biểu mặc định (năm học 2026-2027, áp dụng 12/10/2026). Hàng = tiết 1-5, cột = Thứ 2 đến Thứ 7
+const DEFTKB={n:'Năm học 2026-2027, áp dụng ngày 12/10/2026',
+ S:[['Chào cờ','Lịch Sử','GDKTPL','Ngữ văn','Toán',''],['Toán','Vật lí','Địa Lí','Ngữ văn','Toán',''],['Lịch Sử','Ngữ văn','Anh văn','GDKTPL','Địa Lí',''],['HĐTNHN','GDKTPL','Anh văn','Địa Lí','Anh văn',''],['Vật lí','','','Lịch Sử','SHL','']],
+ C:[['','','GĐTC','','',''],['','','GĐTC','','Tin học',''],['','','GDQPAN','','Tin học',''],['','','','','GDĐP',''],['','','','','','']]};
+if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
 const save=()=>{try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){console.log('Không ghi được data.json:',e.message)}try{snapSoon()}catch(e){}};
 const bank=require('./bank.js');
 D.used=(D.used||[]).map(x=>typeof x==='number'?(bank[x]&&bank[x][0]):x).filter(x=>typeof x==='string');D.extra=D.extra||[];D.box=D.box||[];
@@ -35,8 +40,12 @@ function pick(n){return allBank().filter(q=>!D.used.includes(q[0])).sort(()=>Mat
 const sendBank=()=>{const a=allBank(),left=a.filter(q=>!D.used.includes(q[0])).length;wss.clients.forEach(w=>w.u==='admin'&&to(w,{t:'bank',left:left,total:a.length}))};
 const online=()=>bc({t:'on',l:stu().map(w=>({i:w.u,n:NAMES[w.u],av:D.av[w.u],r:!!w.rd}))});
 function quiz(qs,sec,fb){G={type:'quiz',qs,sec,fb,k:-1,sc:{}};nextQ()}
-function nextQ(){G.k++;if(G.k>=G.qs.length)return endGame();const q=G.qs[G.k];if(G.fb&&!D.used.includes(q[0])){D.used.push(q[0]);save();sendBank()}const ix=[1,2,3,4].sort(()=>Math.random()-.5);G.cc=ix.indexOf(q[5])+1;G.ans={};G.rv=false;G.t0=Date.now();bc({t:'q',k:G.k,n:G.qs.length,q:q[0],o:ix.map(k=>q[k]),sec:G.sec});G.tm=setTimeout(revealQ,G.sec*1000+300)}
-function revealQ(){if(G.rv)return;G.rv=true;clearTimeout(G.tm);const gain={};for(const i in G.ans){const a=G.ans[i];if(a.c===G.cc){const p=Math.round(500+500*(1-a.ms/(G.sec*1000)));gain[i]=p;G.sc[i]=(G.sc[i]||0)+p}}bc({t:'qr',ans:G.cc,gain,top:topOf(G.sc)});G.tm=setTimeout(nextQ,4500)}
+function nextQ(){G.k++;if(G.k>=G.qs.length)return endGame();const q=G.qs[G.k];if(G.fb&&!D.used.includes(q[0])){D.used.push(q[0]);save();sendBank()}const ix=[1,2,3,4].sort(()=>Math.random()-.5);G.cc=ix.indexOf(q[5])+1;G.ans={};G.win=null;G.rv=false;G.t0=Date.now();bc({t:'q',k:G.k,n:G.qs.length,q:q[0],o:ix.map(k=>q[k]),sec:G.sec});G.tm=setTimeout(revealQ,G.sec*1000+300)}
+function revealQ(){if(G.rv)return;G.rv=true;clearTimeout(G.tm);const gain={};
+ // Ai đúng nhanh nhất được 1000 điểm; các bạn đúng sau bị trừ 10 điểm cho mỗi 0,1 giây chậm hơn, thấp nhất 500
+ const ok=Object.keys(G.ans).filter(i=>G.ans[i].c===G.cc).map(i=>({i:+i,ms:G.ans[i].ms})).sort((a,b)=>a.ms-b.ms);
+ const ord=ok.map(r=>{const p=Math.max(500,Math.round(1000-(r.ms-ok[0].ms)/10));gain[r.i]=p;G.sc[r.i]=(G.sc[r.i]||0)+p;return{i:r.i,n:NAMES[r.i],ms:r.ms,p}});
+ bc({t:'qr',ans:G.cc,gain,win:ord[0]||null,ord:ord.slice(0,5),top:topOf(G.sc)});G.tm=setTimeout(nextQ,4500)}
 function tap(){G={type:'tap',sc:{},team:{},run:false};bc({t:'tap',ph:'count'});G.tm=setTimeout(()=>{G.run=true;bc({t:'tap',ph:'go',sec:15});G.iv=setInterval(()=>bc({t:'tapS',team:G.team}),400);G.tm=setTimeout(tapEnd,15000)},3000)}
 function tapEnd(){G.run=false;clearInterval(G.iv);let win=0,mx=-1;for(const t in G.team)if(G.team[t]>mx){mx=G.team[t];win=t}for(const i in G.sc)if(D.tos[i]==win)G.sc[i]+=200;endGame({team:G.team,win})}
 
@@ -66,13 +75,13 @@ async function restoreSnap(){
   const j=JSON.parse(await r.text());if(!j||!j.ok)return false;
   if(j.data){const x=JSON.parse(j.data);
    D=Object.assign({roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]},x);
-   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];
+   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
    try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){}
    console.log('Đã khôi phục dữ liệu từ Google Sheet')}
   return true}catch(e){console.log('Chưa đọc được bản sao Google Sheet:',e.message);return false}}
 const wishesFor=u=>{const k=vn();return D.wishes.filter(x=>(x.y===k.y&&BDAY[x.to]===k.key)||x.to===u)};
 function auth(w,i,k){w.u=i;w.tk=k;to(w,{t:'auth',i:i,n:i==='admin'?'':NAMES[i],adm:i==='admin',token:k});
- to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
+ to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'tkb',d:D.tkb});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
  if(i==='admin'){to(w,{t:'cfg',sheets:!!SHEETS_URL});to(w,{t:'hist',l:D.his});to(w,{t:'box',l:D.box.map(boxView)});sendBank()}
  if(G)to(w,{t:'busy',g:G.type});online()}
 wss.on('connection',w=>{
@@ -84,6 +93,10 @@ wss.on('connection',w=>{
   if(m.t==='resume'&&D.tok[m.token]!==undefined)return auth(w,D.tok[m.token],m.token);
   return to(w,{t:'relogin'})}
  const u=w.u,adm=u==='admin';
+ // Sửa thời khóa biểu: giáo viên hoặc lớp trưởng
+ if(m.t==='tkb'){if(!(adm||D.roles[u]==='lt'))return to(w,{t:'err',m:'Chỉ lớp trưởng và giáo viên được sửa thời khóa biểu.'});
+  const cl=g=>Array.from({length:5},(_,r)=>Array.from({length:6},(_,c)=>String(((m.d&&m.d[g]&&m.d[g][r])||[])[c]||'').replace(/\s+/g,' ').trim().slice(0,24)));
+  D.tkb={n:String((m.d&&m.d.n)||'').trim().slice(0,60),S:cl('S'),C:cl('C')};logH(u,'Sửa thời khóa biểu','');save();return bc({t:'tkb',d:D.tkb})}
  if(m.t==='av'&&!adm){const n=+m.n;if(n>=0&&n<300){D.av[u]=n;save();pushRoster();online()}return}
  if(m.t==='to'){const i=+m.i;if(!(i>=0&&i<NAMES.length))return;const t=[1,2,3,4].includes(+m.to)?+m.to:0;
   const mine=(!adm&&D.roles[u]==='tt')?D.tos[u]:null;

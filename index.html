@@ -114,6 +114,7 @@ td select{padding:6px 8px;min-width:120px}
 .p3 .pb{height:40px;background:linear-gradient(#e8b27a,#c97f3d)}
 .p3{animation-delay:.1s}.p2{animation-delay:.35s}.p1{animation-delay:.65s}
 .pod-m{text-align:center;font-weight:700;margin:12px 0 0}
+.tkb{width:100%;border-collapse:collapse;text-align:center}.tkb th,.tkb td{border:2px solid var(--bd);padding:8px 4px;min-width:62px;height:38px}.tkb th{background:rgba(255,160,200,.18)}.tkb .td{background:rgba(255,200,0,.22)}.tkb input,#tkbnote{width:100%;box-sizing:border-box;font:inherit;text-align:center;padding:4px 2px}
 </style></head>
 <body>
 <div class="wrap">
@@ -129,8 +130,8 @@ td select{padding:6px 8px;min-width:120px}
 <span id="mtow"><select id="mto" style="width:auto;margin:0"><option value="">— Chọn tổ —</option><option value="1">🌸 Tổ 1</option><option value="2">⭐ Tổ 2</option><option value="3">🍀 Tổ 3</option><option value="4">🦋 Tổ 4</option></select></span>
 <button class="btn s" id="out" style="margin:0">Thoát</button></div>
 <div id="bday"></div>
-<div class="tabs" id="tabs"><button data-t="r" class="on">📝 Báo cáo</button><button data-t="l">📋 Danh sách lớp</button><button data-t="g">🎮 Trò chơi</button><button data-t="x" id="tabx" style="display:none">⬇️ Xuất báo cáo</button><button data-t="b" id="tabb">📮 Thùng góp ý<span id="bbadge"></span></button><button data-t="h" id="tabh" style="display:none">🕘 Lịch sử</button></div>
-<section id="t-r"><div id="warnW"></div>
+<div class="tabs" id="tabs"><button data-t="r" class="on">📝 Báo cáo</button><button data-t="l">📋 Danh sách lớp</button><button data-t="k">🗓️ Thời khóa biểu</button><button data-t="g">🎮 Trò chơi</button><button data-t="x" id="tabx" style="display:none">⬇️ Xuất báo cáo</button><button data-t="b" id="tabb">📮 Thùng góp ý<span id="bbadge"></span></button><button data-t="h" id="tabh" style="display:none">🕘 Lịch sử</button></div>
+<section id="t-r"><div id="tkbhome"></div><div id="warnW"></div>
 <div class="card"><div class="row"><div><label>Tuần</label><input id="tuan" type="number" min="1" value="1"></div><div><label>Ngày sinh hoạt</label><input id="ngay" type="date"></div></div>
 <label>Chọn mục báo cáo</label><div id="mk" class="chips"></div>
 <div id="ff"></div>
@@ -154,6 +155,7 @@ td select{padding:6px 8px;min-width:120px}
 <div class="row" style="margin-top:10px"><button class="btn" data-x="csv" style="margin:0">⬇️ Xuất Excel</button><button class="btn" data-x="doc" style="margin:0">⬇️ Xuất Word</button></div>
 <button class="btn" data-x="list" style="margin-top:10px;background:var(--card);color:var(--tx);border:2px solid var(--bd);box-shadow:none">⬇️ Xuất danh sách lớp (Excel)</button></div><div id="bkp" class="card" hidden><h3>💾 Sao lưu dữ liệu</h3><div class="mu">Tải toàn bộ dữ liệu (báo cáo, điểm, phân công, góp ý…) về máy. Khi cần, khôi phục lại từ file này.</div><button class="btn" data-x="backup">💾 Sao lưu (tải về)</button><button class="btn" data-x="restore" style="background:var(--card);color:var(--tx);border:2px solid var(--bd);box-shadow:none">♻️ Khôi phục từ file</button><input type="file" id="rfile" accept=".json,application/json" hidden><div class="mu" id="shst" style="margin-top:14px"></div><button class="btn" data-x="sheet">📊 Gửi tất cả lên Google Sheet</button></div></section>
 <section id="t-b" class="hide"><div id="bform" class="card"><h3>📮 Thùng góp ý của lớp</h3><div class="mu">Bạn có ý kiến, đề xuất hay điều muốn nói? Nội dung chỉ có giáo viên chủ nhiệm đọc được, các bạn khác không xem được.</div><label>Nội dung góp ý</label><textarea id="bt" maxlength="1000" placeholder="Viết góp ý của bạn…"></textarea><label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:700;color:var(--tx)"><input type="checkbox" id="banon" style="width:auto;margin:0"> Gửi ẩn danh (giáo viên sẽ không thấy tên bạn)</label><button class="btn" id="bsend">📮 Bỏ vào thùng</button></div><div id="blist" hidden></div></section>
+<section id="t-k" class="hide"><div class="card"><h3 style="margin-top:0">🗓️ Thời khóa biểu lớp 12A3</h3><div class="mu" id="tkbn"></div><div class="row" style="margin-top:10px"><button class="btn" id="tkbbtn" hidden style="margin:0">✏️ Chỉnh sửa</button><button class="btn" id="tkbcx" hidden style="margin:0;background:var(--card);color:var(--tx);border:2px solid var(--bd);box-shadow:none">Hủy</button></div><div class="mu" id="tkbhint" style="margin-top:6px"></div></div><div id="tkbw"></div></section>
 <section id="t-h" class="hide"><div id="hlist"></div></section>
 </div></div>
 <div class="toast" id="toast"></div>
@@ -187,7 +189,7 @@ function sh(i){return NAMES[i].split(" ").pop()}
 function roleOf(i){var r=R.roles[i];return r?(r==="tt"?"Tổ trưởng tổ "+R.tos[i]:ROLES[r]):""}
 function holder(k){var f=null;Object.keys(R.roles).forEach(function(i){var r=R.roles[i];if(r===k)f=Number(i);else if(r==="tt"&&/^t[1-4]$/.test(k)&&R.tos[i]==k.charAt(1))f=Number(i)});return f}
 function send(m){if(ws&&ws.readyState===1)ws.send(JSON.stringify(m))}
-function conn(){ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
+function conn(){if(!location.host){var er=$("er");if(er)er.textContent="Bạn đang mở file trực tiếp nên chưa kết nối được. Hãy mở bằng địa chỉ web của lớp (Render) hoặc http://localhost:3000 sau khi chạy node server.js.";return}ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
  ws.onopen=function(){var t=lget("tok12");if(t)send({t:"resume",token:t})};
  ws.onmessage=function(e){onMsg(JSON.parse(e.data))};
  ws.onclose=function(){setTimeout(conn,1500)}}
@@ -197,7 +199,8 @@ function vnNow(){if(window.DEMO_KEY)return{key:DEMO_KEY,y:2026,d:+DEMO_KEY.slice
 function onMsg(m){
  switch(m.t){
  case"auth":ME={i:m.i,adm:m.adm};lset("tok12",m.token||null);$("login").hidden=true;$("app").hidden=false;$("tabh").style.display=m.adm?"":"none";$("tabx").style.display=m.adm?"":"none";$("g_ad").hidden=!m.adm;$("gvbox").style.display=m.adm?"":"none";$("bkp").hidden=!m.adm;$("g_rdc").hidden=!!m.adm;$("bform").hidden=!!m.adm;$("blist").hidden=!m.adm;renderAll();break;
- case"roster":R={roles:m.roles||{},tos:m.tos||{},gen:m.gen||{},av:m.av||{}};if(ME)renderAll();if(window.gRav)window.gRav();break;
+ case"roster":R={roles:m.roles||{},tos:m.tos||{},gen:m.gen||{},av:m.av||{}};if(ME){renderAll();renderTkb()}if(window.gRav)window.gRav();break;
+ case"tkb":TKB=m.d;if(tkbEdit)renderTkbHome();else renderTkb();break;
  case"reports":REP=m.list||[];REM=m.rem||{};if(ME){renderMk();renderWarn();renderReports()}break;
  case"wishes":WISH=m.l||[];renderBday();break;
  case"wish":if(!WISH.some(function(x){return x.id===m.w.id}))WISH.push(m.w);renderBday();break;
@@ -212,7 +215,33 @@ function onMsg(m){
  case"err":$("er").textContent=m.m;toast(m.m);break;
  case"note":toast(m.m);break;
  case"relogin":lset("tok12",null);ME=null;$("app").hidden=true;$("login").hidden=false;break}
- if(!/^(auth|roster|reports|wishes|wish|hist|h1|backup|cfg|box|box1|boxok|err|note|relogin)$/.test(m.t)&&window.gOn)window.gOn(m)}
+ if(!/^(auth|roster|tkb|reports|wishes|wish|hist|h1|backup|cfg|box|box1|boxok|err|note|relogin)$/.test(m.t)&&window.gOn)window.gOn(m)}
+/* ---------- Thời khóa biểu ---------- */
+var TKB=null,tkbEdit=false,TKBD=["Thứ 2","Thứ 3","Thứ 4","Thứ 5","Thứ 6","Thứ 7"];
+function tkbCan(){return!!ME&&(ME.adm||R.roles[ME.i]==="lt")}
+function renderTkbHome(){var el=$("tkbhome");if(!el||!TKB)return;
+ var dw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"})).getDay(),today=dw>=1&&dw<=6?dw-1:-1;
+ var h='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">🗓️ Thời khóa biểu lớp 12A3</h3><a href="#" id="tkbgo" style="font-size:13px">Xem / chỉnh sửa</a></div><div class="mu" style="margin:4px 0 8px">'+esc(TKB.n||"")+'</div><div class="tw"><table class="tkb"><thead><tr><th>Buổi</th><th>Tiết</th>'+TKBD.map(function(d,j){return"<th"+(j===today?' class="td"':"")+">"+d+"</th>"}).join("")+"</tr></thead><tbody>";
+ [["S","Sáng"],["C","Chiều"]].forEach(function(b){var rows=[];
+  for(var r=0;r<5;r++){var row=(TKB[b[0]]&&TKB[b[0]][r])||[];if(row.some(function(v){return v}))rows.push(r)}
+  rows.forEach(function(r,k){h+="<tr>"+(k===0?'<th rowspan="'+rows.length+'">'+b[1]+"</th>":"")+"<th>"+(r+1)+"</th>";for(var c=0;c<6;c++)h+="<td"+(c===today?' class="td"':"")+">"+esc((TKB[b[0]][r]||[])[c]||"")+"</td>";h+="</tr>"})});
+ h+="</tbody></table></div></div>";el.innerHTML=h;
+ $("tkbgo").onclick=function(e){e.preventDefault();var b=document.querySelector('#tabs [data-t="k"]');if(b)b.click()}}
+function renderTkb(){renderTkbHome();var el=$("tkbw");if(!el||!TKB)return;var can=tkbCan();
+ var dw=new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Ho_Chi_Minh"})).getDay(),today=dw>=1&&dw<=6?dw-1:-1,h="";
+ $("tkbn").innerHTML=tkbEdit?'<input id="tkbnote" maxlength="60" value="'+esc(TKB.n||"")+'" placeholder="Ví dụ: Năm học 2026-2027, áp dụng ngày ...">':esc(TKB.n||"");
+ [["S","☀️ Buổi sáng"],["C","🌤️ Buổi chiều"]].forEach(function(b){
+  h+='<div class="card"><h3 style="margin-top:0">'+b[1]+'</h3><div class="tw"><table class="tkb"><thead><tr><th>Tiết</th>'+TKBD.map(function(d,j){return"<th"+(j===today?' class="td"':"")+">"+d+"</th>"}).join("")+"</tr></thead><tbody>";
+  for(var r=0;r<5;r++){h+="<tr><th>"+(r+1)+"</th>";for(var c=0;c<6;c++){var v=(TKB[b[0]]&&TKB[b[0]][r]&&TKB[b[0]][r][c])||"";h+="<td"+(c===today?' class="td"':"")+">"+(tkbEdit?'<input data-b="'+b[0]+'" data-r="'+r+'" data-c="'+c+'" value="'+esc(v)+'" maxlength="24">':esc(v))+"</td>"}h+="</tr>"}
+  h+="</tbody></table></div></div>"});
+ el.innerHTML=h;$("tkbbtn").hidden=!can;$("tkbbtn").textContent=tkbEdit?"💾 Lưu thời khóa biểu":"✏️ Chỉnh sửa";$("tkbcx").hidden=!(can&&tkbEdit);
+ $("tkbhint").textContent=can?(tkbEdit?"Gõ trực tiếp vào ô, ô trống là không có tiết. Bấm Lưu để cả lớp thấy.":"Lớp trưởng và giáo viên có thể chỉnh sửa. Cột hôm nay được tô màu."):"Cột hôm nay được tô màu."}
+$("tkbbtn").onclick=function(){if(!tkbCan())return;
+ if(!tkbEdit){tkbEdit=true;renderTkb();return}
+ var d={n:($("tkbnote")||{}).value||"",S:[[],[],[],[],[]],C:[[],[],[],[],[]]};
+ Array.prototype.forEach.call($("tkbw").querySelectorAll("input"),function(x){d[x.dataset.b][+x.dataset.r][+x.dataset.c]=x.value});
+ send({t:"tkb",d:d});tkbEdit=false;toast("Đã lưu thời khóa biểu ✅")};
+$("tkbcx").onclick=function(){tkbEdit=false;renderTkb()};
 /* ---------- Sinh nhật ---------- */
 function flEl(w){var h=0,s=w.id;for(var k=0;k<s.length;k++)h=(h*31+s.charCodeAt(k))%997;return'<span class="fl" title="'+esc(NAMES[w.from])+'" style="left:'+(4+h%88)+'%;bottom:'+(h%4)*8+'px;font-size:'+(22+h%3*5)+'px">'+esc(w.e)+'</span>'}
 function renderBday(){
@@ -337,7 +366,7 @@ document.addEventListener("change",function(e){var el=e.target,d=el.dataset||{};
  else if(d.role!==undefined)send({t:"role",i:+d.role,role:el.value});
  else if(d.gen!==undefined)send({t:"gen",i:+d.gen,g:el.value})});
 document.addEventListener("click",function(e){var b=e.target,d=b.dataset||{};
- if(d.t){["r","l","g","x","b","h"].forEach(function(k){$("t-"+k).className=k===d.t?"":"hide"});Array.prototype.forEach.call($("tabs").children,function(x){x.className=x===b?"on":""})}
+ if(d.t){["r","l","k","g","x","b","h"].forEach(function(k){$("t-"+k).className=k===d.t?"":"hide"});Array.prototype.forEach.call($("tabs").children,function(x){x.className=x===b?"on":""})}
  var mb=b.closest&&b.closest("[data-mk]");if(mb&&!mb.disabled){MK=mb.dataset.mk;renderMk()}
  if(d.fl){var p=d.fl.split("|");send({t:"flower",to:+p[0],e:p[1]})}
  if(d.wish!==undefined){var ti=$("wt"+d.wish);send({t:"flower",to:+d.wish,e:"💌",text:ti.value.trim()});ti.value=""}
@@ -385,7 +414,7 @@ case'on':{const mp={};m.l.forEach(p=>{const o=mp[p.i];if(!o)mp[p.i]=Object.assig
  break}
 case'pins':$('pl').innerHTML=m.p.map(p=>`<div class="grow"><span>${esc(p[0])}</span><b>${p[1]}</b></div>`).join('');break;
 case'q':picked=0;qt0=Date.now();S(`<div class="mu">Câu ${m.k+1}/${m.n}</div><h2>${esc(m.q)}</h2><div class="bar"><i style="animation-duration:${m.sec}s"></i></div><div class="ops">${m.o.map((o,i)=>`<button class="op c${i}" data-c="${i+1}">${'▲◆●■'[i]} ${esc(o)}</button>`).join('')}</div><div id="g_rs"></div>`);break;
-case'qr':{const ops=document.querySelectorAll('.op');ops.forEach((b,i)=>{b.classList.toggle('ok',i+1===m.ans);if(i+1!==m.ans&&!b.classList.contains('pk'))b.classList.add('no')});document.querySelector('.bar i')&&(document.querySelector('.bar i').style.animationPlayState='paused');const g=m.gain&&Object.keys(m.gain).length;$('rs').innerHTML='<h3 style="margin-top:12px">Bảng điểm vòng này</h3>'+gtop(m.top);break}
+case'qr':{const ops=document.querySelectorAll('.op');ops.forEach((b,i)=>{b.classList.toggle('ok',i+1===m.ans);if(i+1!==m.ans&&!b.classList.contains('pk'))b.classList.add('no')});document.querySelector('.bar i')&&(document.querySelector('.bar i').style.animationPlayState='paused');const g=m.gain&&Object.keys(m.gain).length;$('rs').innerHTML='<div class="card" style="text-align:center;font-size:18px;font-weight:800">'+(m.win?'⚡ '+esc(m.win.n)+' đúng nhanh nhất ('+(m.win.ms/1000).toFixed(2)+' giây)':'😅 Chưa ai trả lời đúng')+'</div>'+(m.ord&&m.ord.length?'<div class="card">'+m.ord.map(function(r,k){return'<div class="grow"><span>'+(k+1)+'. '+esc(r.n)+' · '+(r.ms/1000).toFixed(2)+'s</span><b>+'+r.p+'</b></div>'}).join('')+'</div>':'')+'<span></span><h3 style="margin-top:12px">Bảng điểm vòng này</h3>'+gtop(m.top);break}
 case'tap':if(m.ph==='count'){let n=3;S('<h1 id="g_cd" style="text-align:center;font-size:64px">3</h1>');tick=setInterval(()=>{n--;if($('cd'))$('cd').textContent=n>0?n:'…'},1000)}
  else{cnt=0;S(`<div class="bar"><i style="animation-duration:${m.sec}s"></i></div><button id="g_tp">🔥 BẤM LIÊN TỤC!</button><h2 id="g_ct" style="text-align:center">0</h2><div id="g_tt"></div>`);$('tp').onpointerdown=e=>{e.preventDefault();cnt++;$('ct').textContent=cnt;send({t:'tap'})}}break;
 case'tapS':if($('tt')){const mx=Math.max(1,...Object.values(m.team));$('tt').innerHTML=[1,2,3,4].map(t=>{const v=m.team[t]||0;return`<div class="tb" style="width:${Math.max(18,v/mx*100)}%">Tổ ${t}: ${v}</div>`}).join('')}break;
