@@ -326,7 +326,7 @@ function renderRemBadge(){var n=newRem().length,tb=document.querySelector('#tabs
  var el=$("remnote");if(el)el.innerHTML=n?'<div class="card remnote"><span>💬 Giáo viên chủ nhiệm vừa nhận xét <b>'+n+'</b> báo cáo của bạn</span><button class="btn" data-go="r" style="margin:0;width:auto;padding:6px 12px">Xem ngay</button></div>':""}
 function linkify(t){return esc(t).replace(/\n/g,"<br>").replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')}
 function renderNotices(){var el=$("noticew");if(!el)return;var adm=!!(ME&&ME.adm);
- if(NF&&el.contains(document.activeElement))return;
+ var ae0=document.activeElement;if(NF&&ae0&&el.contains(ae0)&&/^(INPUT|TEXTAREA)$/.test(ae0.tagName))return;
  if(!NOTI.length&&!adm&&!NF){el.innerHTML="";return}
  var h='<div class="card nt"><div class="nth"><h3 style="margin:0">📢 Thông báo của trường</h3>'+(adm&&!NF?'<button class="btn s" data-nadd="1" style="margin:0;width:auto;padding:5px 12px">➕ Đăng thông báo</button>':"")+"</div>";
  if(adm&&NF){var ed=NF.id?NOTI.filter(function(x){return x.id===NF.id})[0]:null;
