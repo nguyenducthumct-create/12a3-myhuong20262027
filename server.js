@@ -7,14 +7,17 @@ const DBF=path.join(process.env.DATA_DIR||__dirname,'data.json');
 let D={roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]};
 const FRESH=!fs.existsSync(DBF);
 try{D=Object.assign(D,JSON.parse(fs.readFileSync(DBF,'utf8')))}catch(e){}
-var snapReady=false,snapT=null;
+var snapReady=false,snapT=null,needPushW8=false,restoring=FRESH;
 // Thời khóa biểu mặc định (năm học 2026-2027, áp dụng 12/10/2026). Hàng = tiết 1-5, cột = Thứ 2 đến Thứ 7
 const DEFTKB={n:'',yr:'2026-2027',ad:'12/10/2026',
  S:[['Chào cờ','Lịch Sử','GDKTPL','Ngữ văn','Toán',''],['Toán','Vật lí','Địa Lí','Ngữ văn','Toán',''],['Lịch Sử','Ngữ văn','Anh văn','GDKTPL','Địa Lí',''],['HĐTNHN','GDKTPL','Anh văn','Địa Lí','Anh văn',''],['Vật lí','','','Lịch Sử','SHL','']],
  C:[['','','GĐTC','','',''],['','','GĐTC','','Tin học',''],['','','GDQPAN','','Tin học',''],['','','','','GDĐP',''],['','','','','','']]};
 if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));
 if(!D.notices)D.notices=[];
-const save=()=>{try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){console.log('Không ghi được data.json:',e.message)}try{snapSoon()}catch(e){}};
+// Chuyển một lần: các báo cáo đã có đều là của tuần 8 (Tuần 1 bắt đầu 07/09/2026)
+function fixWeek8(){if(D.fixW8)return;if((D.reports||[]).length){D.reports.forEach(r=>{r.tuan=8});needPushW8=true}D.fixW8=1;save()}
+function afterBoot(){if(needPushW8&&SHEETS_URL&&D.reports.length){needPushW8=false;pushSheet({kind:'bulk',reports:D.reports.map(repRow)})}}
+const save=()=>{try{if(!restoring)fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){console.log('Không ghi được data.json:',e.message)}try{snapSoon()}catch(e){}};
 const bank=require('./bank.js');
 D.used=(D.used||[]).map(x=>typeof x==='number'?(bank[x]&&bank[x][0]):x).filter(x=>typeof x==='string');D.extra=D.extra||[];D.box=D.box||[];
 const strip=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -76,7 +79,7 @@ async function restoreSnap(){
   const j=JSON.parse(await r.text());if(!j||!j.ok)return false;
   if(j.data){const x=JSON.parse(j.data);
    D=Object.assign({roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[]},x);
-   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));if(!D.notices)D.notices=[];
+   D.used=(D.used||[]).map(q=>typeof q==='number'?(bank[q]&&bank[q][0]):q).filter(q=>typeof q==='string');D.extra=D.extra||[];D.box=D.box||[];if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));if(!D.notices)D.notices=[];fixWeek8();
    try{fs.writeFileSync(DBF,JSON.stringify(D))}catch(e){}
    console.log('Đã khôi phục dữ liệu từ Google Sheet')}
   return true}catch(e){console.log('Chưa đọc được bản sao Google Sheet:',e.message);return false}}
@@ -127,6 +130,7 @@ wss.on('connection',w=>{
   pushSheet({kind:'report',row:repRow(D.reports[D.reports.length-1])});
   logH(u,'Thêm báo cáo','Tuần '+tuan+' — '+NAMES[h]+' ('+label(h)+')');save();to(w,{t:'note',m:'Đã lưu báo cáo ✅'});return pushReports()}
  if(m.t==='delrep'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;D.reports=D.reports.filter(x=>x.id!==m.id);delete D.rem[m.id];logH(u,'Xóa báo cáo','Tuần '+r.tuan+' — '+r.ten);save();pushSheet({kind:'delreport',id:r.id});return pushReports()}
+ if(m.t==='rweek'&&adm){const r=D.reports.find(x=>x.id===m.id),t=+m.tuan;if(!r||!(t>=1&&t<=60))return;r.tuan=t;logH(u,'Đổi tuần báo cáo',r.ten+' → tuần '+t);save();pushSheet({kind:'report',row:repRow(r)});return pushReports()}
  if(m.t==='remark'&&adm){const r=D.reports.find(x=>x.id===m.id);if(!r)return;const t=String(m.text||'').trim().slice(0,1000);if(t)D.rem[m.id]=t;else delete D.rem[m.id];logH(u,'Nhận xét GVCN','Tuần '+r.tuan+' — '+r.ten);save();pushSheet({kind:'report',row:repRow(r)});return pushReports()}
  if(m.t==='flower'&&!adm){const k=vn(),t=+m.to;
   if(!(t>=0&&t<NAMES.length)||BDAY[t]!==k.key)return to(w,{t:'note',m:'Chỉ gửi hoa đúng ngày sinh nhật của bạn ấy nhé 🌸'});
@@ -175,9 +179,10 @@ wss.on('connection',w=>{
  w.on('close',()=>{online()})});
 const listen=()=>server.listen(process.env.PORT||3000,()=>console.log('Chạy tại http://localhost:'+(process.env.PORT||3000)+' | đăng nhập giáo viên bằng mã ADMIN_CODE'));
 (async()=>{
- if(!SHEETS_URL){console.log('CẢNH BÁO: chưa đặt SHEETS_URL; nếu không có ổ đĩa (DATA_DIR) dữ liệu sẽ mất khi server khởi động lại');return listen()}
- if(!FRESH){snapReady=true;snapSoon();return listen()}
+ fixWeek8();
+ if(!SHEETS_URL){console.log('CẢNH BÁO: chưa đặt SHEETS_URL; nếu không có ổ đĩa (DATA_DIR) dữ liệu sẽ mất khi server khởi động lại');restoring=false;save();return listen()}
+ if(!FRESH){snapReady=true;snapSoon();afterBoot();return listen()}
  let ok=false;for(let n=0;n<3&&!ok;n++)ok=await restoreSnap();
- if(ok){snapReady=true;snapSoon();return listen()}
+ if(ok){restoring=false;save();snapReady=true;snapSoon();afterBoot();return listen()}
  listen();
- const iv=setInterval(async()=>{if(await restoreSnap()){clearInterval(iv);snapReady=true;snapSoon();pushRoster();pushReports()}},30000)})();
+ const iv=setInterval(async()=>{if(await restoreSnap()){clearInterval(iv);restoring=false;save();snapReady=true;snapSoon();pushRoster();pushReports();afterBoot()}},30000)})();
