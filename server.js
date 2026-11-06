@@ -33,6 +33,9 @@ const wss=new WebSocketServer({server});
 const stu=()=>[...wss.clients].filter(w=>w.readyState===1&&w.u!==undefined&&w.u!=='admin');
 const to=(w,m)=>w.readyState===1&&w.send(JSON.stringify(m));
 const bc=m=>wss.clients.forEach(w=>w.u!==undefined&&to(w,m));
+// Thông báo: học sinh không thấy thông báo đã ẩn, giáo viên thấy tất cả
+const noticesFor=a=>(D.notices||[]).filter(n=>a||!n.hid);
+const bcN=()=>wss.clients.forEach(w=>w.u!==undefined&&to(w,{t:'notices',l:noticesFor(w.u==='admin')}));
 const topOf=sc=>Object.entries(sc).map(([i,s])=>({n:NAMES[i],s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,10);
 const board=()=>Object.entries(D.total).map(([i,s])=>({n:NAMES[i],to:D.tos[i]||0,s,av:D.av[i]})).sort((a,b)=>b.s-a.s).slice(0,15);
 let G=null;
@@ -85,7 +88,7 @@ async function restoreSnap(){
   return true}catch(e){console.log('Chưa đọc được bản sao Google Sheet:',e.message);return false}}
 const wishesFor=u=>{const k=vn();return D.wishes.filter(x=>(x.y===k.y&&BDAY[x.to]===k.key)||x.to===u)};
 function auth(w,i,k){w.u=i;w.tk=k;to(w,{t:'auth',i:i,n:i==='admin'?'':NAMES[i],adm:i==='admin',token:k});
- to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'tkb',d:D.tkb});to(w,{t:'notices',l:D.notices});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
+ to(w,{t:'roster',roles:D.roles,tos:D.tos,gen:D.gen,av:D.av});to(w,{t:'tkb',d:D.tkb});to(w,{t:'notices',l:noticesFor(i==='admin')});to(w,{t:'reports',list:D.reports,rem:D.rem});to(w,{t:'wishes',l:wishesFor(i)});to(w,{t:'board',b:board()});
  if(i==='admin'){to(w,{t:'cfg',sheets:!!SHEETS_URL});to(w,{t:'hist',l:D.his});to(w,{t:'box',l:D.box.map(boxView)});sendBank()}
  if(G)to(w,{t:'busy',g:G.type});online()}
 wss.on('connection',w=>{
@@ -102,8 +105,9 @@ wss.on('connection',w=>{
   if(!title&&!text)return to(w,{t:'note',m:'Hãy nhập nội dung thông báo'});
   if(m.id){const n=D.notices.find(x=>x.id===m.id);if(!n)return;n.title=title;n.text=text;n.up=Date.now()}
   else{D.notices.unshift({id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,4),title,text,ts:Date.now()});D.notices=D.notices.slice(0,50)}
-  logH(u,m.id?'Sửa thông báo':'Đăng thông báo',title||text.slice(0,40));save();return bc({t:'notices',l:D.notices})}
- if(m.t==='delnotice'){if(!adm)return;const n=D.notices.find(x=>x.id===m.id);if(!n)return;D.notices=D.notices.filter(x=>x.id!==m.id);logH(u,'Xóa thông báo',n.title||'');save();return bc({t:'notices',l:D.notices})}
+  logH(u,m.id?'Sửa thông báo':'Đăng thông báo',title||text.slice(0,40));save();return bcN()}
+ if(m.t==='hidenotice'){if(!adm)return;const n=D.notices.find(x=>x.id===m.id);if(!n)return;n.hid=!n.hid;if(!n.hid)delete n.hid;logH(u,n.hid?'Ẩn thông báo':'Hiện thông báo',n.title||'');save();return bcN()}
+ if(m.t==='delnotice'){if(!adm)return;const n=D.notices.find(x=>x.id===m.id);if(!n)return;D.notices=D.notices.filter(x=>x.id!==m.id);logH(u,'Xóa thông báo',n.title||'');save();return bcN()}
  // Sửa thời khóa biểu: giáo viên hoặc lớp trưởng
  if(m.t==='tkb'){if(!(adm||D.roles[u]==='lt'))return to(w,{t:'err',m:'Chỉ lớp trưởng và giáo viên được sửa thời khóa biểu.'});
   const cl=g=>Array.from({length:5},(_,r)=>Array.from({length:6},(_,c)=>String(((m.d&&m.d[g]&&m.d[g][r])||[])[c]||'').replace(/\s+/g,' ').trim().slice(0,24)));
@@ -156,6 +160,7 @@ wss.on('connection',w=>{
    if(!x||typeof x!=='object'||!Array.isArray(x.reports)||!x.roles||typeof x.roles!=='object')return to(w,{t:'note',m:'File này không phải bản sao lưu của web lớp'});
    const tok=D.tok;D=Object.assign({roles:{},tos:{},gen:{},av:{},total:{},tok:{},reports:[],rem:{},wishes:[],his:[],used:[],box:[],extra:[],seeded:1},x,{tok});
    D.used=D.used.filter(y=>typeof y==='string');D.extra=D.extra||[];D.box=D.box||[];
+   if(!D.tkb)D.tkb=JSON.parse(JSON.stringify(DEFTKB));if(!D.notices)D.notices=[];
    logH(u,'Khôi phục dữ liệu','Từ file sao lưu');save();
    wss.clients.forEach(c=>{if(c.u!==undefined&&c.tk)auth(c,c.u,c.tk)});
    return to(w,{t:'note',m:'Đã khôi phục dữ liệu ✅'})}

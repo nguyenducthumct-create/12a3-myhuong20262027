@@ -133,7 +133,7 @@ td select{padding:6px 8px;min-width:120px}
 .rmk{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff7d6;border-left:4px solid #f5b301;color:#5a4300}.rmk h4{margin:0 0 4px}.rmk p{margin:0}
 .remnote .btn{white-space:nowrap;flex:none}.remnote{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff0f3;border:2px solid #ff9fb5;padding:10px 12px}
 .nt{padding:10px 12px}.nth{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.ni{border-top:1px dashed var(--bd);padding:8px 0}.ni:first-of-type{border-top:0}.nih{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nit{margin-top:4px;font-size:14px;line-height:1.5;word-break:break-word}
+.ni.nhid{opacity:.55}.ni{border-top:1px dashed var(--bd);padding:8px 0}.ni:first-of-type{border-top:0}.nih{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nit{margin-top:4px;font-size:14px;line-height:1.5;word-break:break-word}
 .nform input,.nform textarea{width:100%;box-sizing:border-box;margin:0 0 6px}
 .tkbhd{position:relative;line-height:0}.tkbsub{position:absolute;left:50.4%;top:88.3%;transform:translate(-50%,-50%) rotate(1.6deg);white-space:nowrap;font:800 9px/1 Nunito,"Segoe UI",Arial,sans-serif;color:#1d3a78;letter-spacing:-.1px}
 .tkbmeta{display:flex;gap:10px;flex-wrap:wrap;width:100%}.tkbmeta label{margin:0;font-size:13px;font-weight:700}.tkbmeta input{width:auto;margin:0 0 0 4px;padding:4px 6px;font-size:13px}
@@ -333,8 +333,8 @@ function renderNotices(){var el=$("noticew");if(!el)return;var adm=!!(ME&&ME.adm
   h+='<div class="nform"><input id="ntitle" maxlength="100" placeholder="Tiêu đề (ví dụ: Lịch nghỉ lễ)" value="'+esc(ed?ed.title:"")+'"><textarea id="ntext" rows="4" maxlength="1500" placeholder="Nội dung thông báo…">'+esc(ed?ed.text:"")+'</textarea><div class="row"><button class="btn" data-nsave="'+esc(NF.id||"")+'" style="margin:0">'+(ed?"💾 Lưu":"📢 Đăng")+'</button><button class="btn s" data-ncx="1" style="margin:0">Hủy</button></div></div>'}
  if(!NOTI.length)h+='<div class="mu" style="margin-top:6px">Chưa có thông báo nào.</div>';
  var vis=NALL?NOTI:NOTI.slice(0,3);
- vis.forEach(function(n){var isNew=Date.now()-n.ts<3*864e5;
-  h+='<div class="ni"><div class="nih"><b>📌 '+esc(n.title||"Thông báo")+"</b>"+(isNew?'<span class="tag nw">Mới</span>':"")+'<span class="mu">'+new Date(n.ts).toLocaleDateString("vi-VN")+"</span></div>"+(n.text?'<div class="nit">'+linkify(n.text)+"</div>":"")+(adm?'<div class="row" style="margin-top:6px"><button class="btn s" data-nedit="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Sửa</button><button class="btn s" data-ndel="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Xóa</button></div>':"")+"</div>"});
+ vis.forEach(function(n){var isNew=!n.hid&&Date.now()-n.ts<3*864e5;
+  h+='<div class="ni'+(n.hid?' nhid':'')+'"><div class="nih"><b>📌 '+esc(n.title||"Thông báo")+"</b>"+(isNew?'<span class="tag nw">Mới</span>':"")+(n.hid?'<span class="tag">🙈 Đang ẩn với học sinh</span>':"")+'<span class="mu">'+new Date(n.ts).toLocaleDateString("vi-VN")+"</span></div>"+(n.text?'<div class="nit">'+linkify(n.text)+"</div>":"")+(adm?'<div class="row" style="margin-top:6px"><button class="btn s" data-nhid="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">'+(n.hid?"👁 Hiện":"🙈 Ẩn")+'</button><button class="btn s" data-nedit="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Sửa</button><button class="btn s" data-ndel="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Xóa</button></div>':"")+"</div>"});
  if(NOTI.length>3)h+='<button class="btn s" data-nmore="1" style="width:100%;margin-top:6px">'+(NALL?"▲ Thu gọn":"Xem thêm ("+(NOTI.length-3)+" thông báo)")+"</button>";
  el.innerHTML=h+"</div>"}
 /* ---------- Sinh nhật ---------- */
@@ -491,6 +491,7 @@ document.addEventListener("click",function(e){var b=e.target,d=b.dataset||{};
  if(d.nedit){NF={id:d.nedit};renderNotices()}
  if(d.ncx){NF=null;renderNotices()}
  if(d.nsave!==undefined){var nt=$("ntitle"),nx=$("ntext");if(nt&&nx){send({t:"notice",id:d.nsave||undefined,title:nt.value,text:nx.value});NF=null;toast("Đã đăng thông báo 📢")}}
+ if(d.nhid)send({t:"hidenotice",id:d.nhid});
  if(d.ndel&&confirm("Xóa thông báo này?"))send({t:"delnotice",id:d.ndel});
  if(d.nmore){NALL=!NALL;renderNotices()}
  if(d.rwks){var wi=document.querySelector('[data-rwk="'+d.rwks+'"]');if(wi)send({t:"rweek",id:d.rwks,tuan:+wi.value})}
