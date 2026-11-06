@@ -28,7 +28,7 @@ const ROLES={lt:'Lớp trưởng',lphp:'Lớp phó học tập',lppt:'Lớp phó
 const MUC=['lt','lphp','lppt','pvn','tq','t1','t2','t3','t4'];
 for(const i in D.roles)if(D.roles[i]==='cntt')delete D.roles[i];
 if(!D.seeded){D.seeded=1;D.roles={26:'lt',38:'lphp',0:'tq',37:'tt',34:'tt',29:'lppt',17:'pvn',19:'tt',11:'tt'};D.tos={37:1,34:2,11:3,19:4};save()}
-const server=http.createServer((q,r)=>{if(q.url==='/'||q.url.startsWith('/?')){r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});r.end(fs.readFileSync(path.join(__dirname,'index.html')))}else if(q.url==='/favicon.ico'){r.writeHead(204);r.end()}else{r.writeHead(404);r.end()}});
+const server=http.createServer((q,r)=>{if(q.url==='/'||q.url.startsWith('/?')){r.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store'});r.end(fs.readFileSync(path.join(__dirname,'index.html')))}else if(q.url==='/favicon.ico'){r.writeHead(204);r.end()}else{r.writeHead(404);r.end()}});
 const wss=new WebSocketServer({server});
 const stu=()=>[...wss.clients].filter(w=>w.readyState===1&&w.u!==undefined&&w.u!=='admin');
 const to=(w,m)=>w.readyState===1&&w.send(JSON.stringify(m));

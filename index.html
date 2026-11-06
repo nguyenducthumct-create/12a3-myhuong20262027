@@ -133,7 +133,7 @@ td select{padding:6px 8px;min-width:120px}
 .rmk{margin-top:8px;padding:8px 10px;border-radius:12px;background:#fff7d6;border-left:4px solid #f5b301;color:#5a4300}.rmk h4{margin:0 0 4px}.rmk p{margin:0}
 .remnote .btn{white-space:nowrap;flex:none}.remnote{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff0f3;border:2px solid #ff9fb5;padding:10px 12px}
 .nt{padding:10px 12px}.nth{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
-.ni.nhid{opacity:.55}.ni{border-top:1px dashed var(--bd);padding:8px 0}.ni:first-of-type{border-top:0}.nih{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nit{margin-top:4px;font-size:14px;line-height:1.5;word-break:break-word}
+.nd>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nd>summary::-webkit-details-marker{display:none}.nd>summary::before{content:"▸";opacity:.7}.nd[open]>summary::before{content:"▾"}.ni.nhid{opacity:.55}.ni{border-top:1px dashed var(--bd);padding:8px 0}.ni:first-of-type{border-top:0}.nih{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.nit{margin-top:4px;font-size:14px;line-height:1.5;word-break:break-word}
 .nform input,.nform textarea{width:100%;box-sizing:border-box;margin:0 0 6px}
 .tkbhd{position:relative;line-height:0}.tkbsub{position:absolute;left:50.4%;top:88.3%;transform:translate(-50%,-50%) rotate(1.6deg);white-space:nowrap;font:800 9px/1 Nunito,"Segoe UI",Arial,sans-serif;color:#1d3a78;letter-spacing:-.1px}
 .tkbmeta{display:flex;gap:10px;flex-wrap:wrap;width:100%}.tkbmeta label{margin:0;font-size:13px;font-weight:700}.tkbmeta input{width:auto;margin:0 0 0 4px;padding:4px 6px;font-size:13px}
@@ -318,7 +318,7 @@ function renderTkb(){var el=$("tkbhome");if(!el||!TKB)return;var can=tkbCan();tk
  if($("tkbyr"))$("tkbyr").oninput=pv;if($("tkbad"))$("tkbad").oninput=pv;
  tkbFit();if(document.fonts){document.fonts.load('34px "Patrick Hand"').then(tkbFit).catch(function(){})}var im0=document.querySelector("#tkbhome .tkbi");if(im0&&!im0.complete)im0.onload=tkbFit}
 /* ---------- Thông báo của trường & nhận xét mới ---------- */
-var NOTI=[],NF=null,NALL=false,REPLOADED=false,RMS={};try{RMS=JSON.parse(lget("rmseen12")||"{}")}catch(e){}
+var NOPEN={},NOTI=[],NF=null,NALL=false,REPLOADED=false,RMS={};try{RMS=JSON.parse(lget("rmseen12")||"{}")}catch(e){}
 function mineR(r){return!!ME&&!ME.adm&&(r.ai===ME.i||r.ten===NAMES[ME.i])}
 function newRem(){return REP.filter(function(r){return mineR(r)&&REM[r.id]&&RMS[r.id]!==REM[r.id]})}
 function markSeen(id){if(REM[id]&&RMS[id]!==REM[id]&&REP.some(function(r){return r.id===id&&mineR(r)})){RMS[id]=REM[id];lset("rmseen12",JSON.stringify(RMS));renderRemBadge()}}
@@ -330,11 +330,11 @@ function renderNotices(){var el=$("noticew");if(!el)return;var adm=!!(ME&&ME.adm
  if(!NOTI.length&&!adm&&!NF){el.innerHTML="";return}
  var h='<div class="card nt"><div class="nth"><h3 style="margin:0">📢 Thông báo của trường</h3>'+(adm&&!NF?'<button class="btn s" data-nadd="1" style="margin:0;width:auto;padding:5px 12px">➕ Đăng thông báo</button>':"")+"</div>";
  if(adm&&NF){var ed=NF.id?NOTI.filter(function(x){return x.id===NF.id})[0]:null;
-  h+='<div class="nform"><input id="ntitle" maxlength="100" placeholder="Tiêu đề (ví dụ: Lịch nghỉ lễ)" value="'+esc(ed?ed.title:"")+'"><textarea id="ntext" rows="4" maxlength="1500" placeholder="Nội dung thông báo…">'+esc(ed?ed.text:"")+'</textarea><div class="row"><button class="btn" data-nsave="'+esc(NF.id||"")+'" style="margin:0">'+(ed?"💾 Lưu":"📢 Đăng")+'</button><button class="btn s" data-ncx="1" style="margin:0">Hủy</button></div></div>'}
+  h+='<div class="nform"><input id="ntitle" maxlength="100" placeholder="Tiêu đề (ví dụ: Lịch nghỉ lễ)" value="'+esc(ed?ed.title:"")+'"><textarea id="ntext" rows="3" maxlength="1500" placeholder="Nội dung thông báo…">'+esc(ed?ed.text:"")+'</textarea><div class="row"><button class="btn" data-nsave="'+esc(NF.id||"")+'" style="margin:0">'+(ed?"💾 Lưu":"📢 Đăng")+'</button><button class="btn s" data-ncx="1" style="margin:0">Hủy</button></div></div>'}
  if(!NOTI.length)h+='<div class="mu" style="margin-top:6px">Chưa có thông báo nào.</div>';
  var vis=NALL?NOTI:NOTI.slice(0,3);
- vis.forEach(function(n){var isNew=!n.hid&&Date.now()-n.ts<3*864e5;
-  h+='<div class="ni'+(n.hid?' nhid':'')+'"><div class="nih"><b>📌 '+esc(n.title||"Thông báo")+"</b>"+(isNew?'<span class="tag nw">Mới</span>':"")+(n.hid?'<span class="tag">🙈 Đang ẩn với học sinh</span>':"")+'<span class="mu">'+new Date(n.ts).toLocaleDateString("vi-VN")+"</span></div>"+(n.text?'<div class="nit">'+linkify(n.text)+"</div>":"")+(adm?'<div class="row" style="margin-top:6px"><button class="btn s" data-nhid="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">'+(n.hid?"👁 Hiện":"🙈 Ẩn")+'</button><button class="btn s" data-nedit="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Sửa</button><button class="btn s" data-ndel="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Xóa</button></div>':"")+"</div>"});
+ vis.forEach(function(n){var isNew=!n.hid&&Date.now()-n.ts<3*864e5,op=NOPEN[n.id]!==undefined?NOPEN[n.id]:isNew;
+  h+='<details class="ni nd'+(n.hid?' nhid':'')+'" data-nid="'+esc(n.id)+'"'+(op?" open":"")+'><summary><b>📌 '+esc(n.title||"Thông báo")+"</b>"+(isNew?'<span class="tag nw">Mới</span>':"")+(n.hid?'<span class="tag">🙈 Đang ẩn</span>':"")+'<span class="mu">'+new Date(n.ts).toLocaleDateString("vi-VN")+"</span></summary>"+(n.text?'<div class="nit">'+linkify(n.text)+"</div>":"")+(adm?'<div class="row" style="margin-top:6px"><button class="btn s" data-nhid="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">'+(n.hid?"👁 Hiện":"🙈 Ẩn")+'</button><button class="btn s" data-nedit="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Sửa</button><button class="btn s" data-ndel="'+esc(n.id)+'" style="margin:0;width:auto;padding:4px 12px">Xóa</button></div>':"")+"</details>"});
  if(NOTI.length>3)h+='<button class="btn s" data-nmore="1" style="width:100%;margin-top:6px">'+(NALL?"▲ Thu gọn":"Xem thêm ("+(NOTI.length-3)+" thông báo)")+"</button>";
  el.innerHTML=h+"</div>"}
 /* ---------- Sinh nhật ---------- */
@@ -410,7 +410,7 @@ function renderReports(){
   h+="</details>"});
  if(tot>6)h+='<div style="display:flex;gap:8px;margin-top:8px">'+(tot>RPN?'<button class="btn s" data-more="1" style="flex:1">Xem thêm ('+(tot-RPN)+' báo cáo)</button>':"")+(RPN>6?'<button class="btn s" data-less="1" style="flex:1">▲ Thu gọn</button>':"")+"</div>";
  $("list").innerHTML=h}
-document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.rid){if(d.open){RPO[d.dataset.rid]=1;markSeen(d.dataset.rid);var t=d.querySelector(".tag.nw");if(t){t.className="tag rm";t.textContent="💬 GVCN đã nhận xét"}}else delete RPO[d.dataset.rid]}},true);
+document.addEventListener("toggle",function(e){var d=e.target;if(d&&d.dataset&&d.dataset.nid){NOPEN[d.dataset.nid]=d.open;return}if(d&&d.dataset&&d.dataset.rid){if(d.open){RPO[d.dataset.rid]=1;markSeen(d.dataset.rid);var t=d.querySelector(".tag.nw");if(t){t.className="tag rm";t.textContent="💬 GVCN đã nhận xét"}}else delete RPO[d.dataset.rid]}},true);
 /* ---------- Danh sách lớp ---------- */
 function norm0(s){return String(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").toLowerCase()}
 function myTT(){return(ME&&!ME.adm&&R.roles[ME.i]==="tt")?R.tos[ME.i]:null}
