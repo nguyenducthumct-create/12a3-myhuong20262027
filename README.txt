@@ -31,4 +31,6 @@ TÍNH NĂNG MỚI
 
 FILE ĐƯA LÊN GITHUB: server.js, index.html, bank.js, package.json, README.txt
 FILE DÁN VÀO APPS SCRIPT (không đưa lên GitHub): google-sheet-script.gs
+- Kho câu hỏi đố nhanh (bank.js) gồm 206 câu về các môn xã hội: Lịch sử Việt Nam và thế giới, Địa lí, Giáo dục kinh tế và pháp luật, Ngữ văn, cùng một số câu vui. Thêm câu mới bằng nút "Lưu câu trên vào kho" (giáo viên) hoặc thêm dòng vào bank.js.
+- Sao lưu / Khôi phục: khôi phục file sao lưu cũ không làm mất thời khóa biểu và thông báo hiện có.
 
